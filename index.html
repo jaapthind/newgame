@@ -3,627 +3,1474 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Soren Soar</title>
+    <title>Soren Soar - Advanced Geometry Physics Engine</title>
     <style>
+        /* =========================================================================================
+           CORE STYLESHEET
+           Architecture: BEM-inspired, variables for theming, fully responsive
+           ========================================================================================= */
+        
         :root {
-            --glass-bg: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.2);
-            --neon-blue: #00f3ff;
-            --neon-pink: #ff00ea;
+            --color-bg-base: #020205;
+            --color-neon-primary: #00e5ff;
+            --color-neon-secondary: #ff0055;
+            --color-neon-tertiary: #a200ff;
+            --color-glass-bg: rgba(10, 15, 30, 0.4);
+            --color-glass-border: rgba(0, 229, 255, 0.3);
+            --color-text-main: #ffffff;
+            --color-text-muted: #8892b0;
+            
+            --font-main: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            --font-display: 'Impact', 'Arial Black', sans-serif;
+            
+            --shadow-neon: 0 0 10px var(--color-neon-primary), 0 0 20px var(--color-neon-primary);
+            --shadow-neon-danger: 0 0 15px var(--color-neon-secondary), 0 0 30px var(--color-neon-secondary);
         }
-        body, html {
+
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
+        }
+
+        html, body {
             width: 100vw;
             height: 100vh;
             overflow: hidden;
-            background-color: #050510;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--color-bg-base);
+            font-family: var(--font-main);
+            color: var(--color-text-main);
+            touch-action: none;
             user-select: none;
             -webkit-user-select: none;
         }
-        #gameCanvas {
-            display: block;
+
+        /* -----------------------------------------------------------------------------------------
+           CANVAS LAYERS
+           ----------------------------------------------------------------------------------------- */
+        
+        #game-container {
+            position: relative;
             width: 100%;
             height: 100%;
+            overflow: hidden;
+        }
+
+        #bg-canvas {
             position: absolute;
             top: 0;
             left: 0;
+            width: 100%;
+            height: 100%;
             z-index: 1;
         }
-        .liquid-glass {
-            background: var(--glass-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1), inset 0 0 20px rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
+
+        #main-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
         }
+
+        #fx-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 3;
+            pointer-events: none;
+            mix-blend-mode: screen;
+        }
+
+        /* -----------------------------------------------------------------------------------------
+           USER INTERFACE
+           ----------------------------------------------------------------------------------------- */
+
         #ui-layer {
             position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             z-index: 10;
             pointer-events: none;
             display: flex;
             flex-direction: column;
+        }
+
+        /* HUD */
+        .hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .hud.active {
+            opacity: 1;
+        }
+
+        .hud__progress-container {
+            width: 400px;
+            max-width: 50vw;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid var(--color-glass-border);
+            border-radius: 20px;
+            padding: 4px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .hud__progress-bar {
+            height: 12px;
+            width: 0%;
+            background: linear-gradient(90deg, var(--color-neon-primary), var(--color-neon-tertiary));
+            border-radius: 10px;
+            box-shadow: var(--shadow-neon);
+            transition: width 0.1s linear;
+        }
+
+        .hud__stats {
+            text-align: right;
+            font-family: var(--font-display);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .hud__attempts {
+            font-size: 1.5rem;
+            color: var(--color-text-muted);
+        }
+
+        .hud__percentage {
+            font-size: 2.5rem;
+            color: var(--color-text-main);
+        }
+
+        /* MENUS */
+        .menu-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
             justify-content: center;
             align-items: center;
-        }
-        .menu-container {
-            padding: 40px 60px;
-            text-align: center;
-            pointer-events: auto;
+            background: radial-gradient(circle at center, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.9) 100%);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            opacity: 0;
+            pointer-events: none;
             transition: opacity 0.3s ease;
         }
-        h1 {
-            color: #fff;
-            font-size: 4rem;
-            margin: 0 0 20px 0;
-            text-transform: uppercase;
-            letter-spacing: 4px;
-            text-shadow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue), 0 0 40px var(--neon-pink);
+
+        .menu-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
         }
-        button {
+
+        .menu-box {
+            background: var(--color-glass-bg);
+            border: 1px solid var(--color-glass-border);
+            border-radius: 16px;
+            padding: 60px 80px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 0 30px rgba(0, 229, 255, 0.05);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .menu-overlay.active .menu-box {
+            transform: scale(1);
+        }
+
+        .menu-title {
+            font-family: var(--font-display);
+            font-size: 5rem;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            background: linear-gradient(to bottom, #ffffff, #888888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 15px var(--color-neon-primary));
+        }
+
+        .menu-subtitle {
+            font-size: 1.2rem;
+            color: var(--color-text-muted);
+            margin-bottom: 40px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* BUTTONS */
+        .btn {
             background: transparent;
-            color: #fff;
-            font-size: 1.5rem;
+            color: var(--color-text-main);
+            border: 2px solid var(--color-glass-border);
             padding: 15px 40px;
-            border: 2px solid var(--neon-blue);
+            font-size: 1.5rem;
+            font-family: var(--font-display);
             border-radius: 8px;
             cursor: pointer;
             text-transform: uppercase;
             letter-spacing: 2px;
-            transition: all 0.2s;
-            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2), inset 0 0 10px rgba(0, 243, 255, 0.2);
-        }
-        button:hover {
-            background: var(--neon-blue);
-            color: #000;
-            box-shadow: 0 0 25px var(--neon-blue), inset 0 0 15px var(--neon-blue);
-        }
-        #hud {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            pointer-events: none;
-            z-index: 5;
-            display: none;
-        }
-        .progress-bar {
-            width: 300px;
-            height: 10px;
-            background: rgba(0,0,0,0.5);
-            border: 1px solid var(--glass-border);
-            border-radius: 5px;
+            position: relative;
             overflow: hidden;
-            margin-top: 10px;
+            transition: all 0.3s ease;
+            outline: none;
         }
-        .progress-fill {
-            width: 0%;
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, var(--neon-blue), var(--neon-pink));
-            box-shadow: 0 0 10px var(--neon-blue);
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
         }
-        .hidden { display: none !important; }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            background: rgba(0, 229, 255, 0.1);
+            border-color: var(--color-neon-primary);
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.4), inset 0 0 10px rgba(0, 229, 255, 0.2);
+            text-shadow: 0 0 5px var(--color-neon-primary);
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn--danger:hover {
+            border-color: var(--color-neon-secondary);
+            box-shadow: 0 0 20px rgba(255, 0, 85, 0.4), inset 0 0 10px rgba(255, 0, 85, 0.2);
+            text-shadow: 0 0 5px var(--color-neon-secondary);
+        }
+
+        /* DEATH SCREEN SPECIFICS */
+        #menu-death .menu-title {
+            background: linear-gradient(to bottom, #ff4444, #aa0000);
+            -webkit-background-clip: text;
+            filter: drop-shadow(0 0 15px var(--color-neon-secondary));
+        }
+
+        /* UTILITIES */
+        .hidden {
+            display: none !important;
+        }
+
     </style>
 </head>
 <body>
 
-    <canvas id="gameCanvas"></canvas>
-    
-    <div id="hud">
-        <div class="liquid-glass" style="padding: 10px 20px;">
-            <div style="color: #fff; font-weight: bold; letter-spacing: 1px;" id="level-display">LEVEL 1</div>
-            <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
-        </div>
-    </div>
+    <div id="game-container">
+        <canvas id="bg-canvas"></canvas>
+        <canvas id="main-canvas"></canvas>
+        <canvas id="fx-canvas"></canvas>
+        
+        <div id="ui-layer">
+            
+            <div id="hud" class="hud">
+                <div class="hud__progress-container">
+                    <div id="hud-bar" class="hud__progress-bar"></div>
+                </div>
+                <div class="hud__stats">
+                    <div id="hud-attempts" class="hud__attempts">ATTEMPT 1</div>
+                    <div id="hud-percent" class="hud__percentage">0%</div>
+                </div>
+            </div>
 
-    <div id="ui-layer">
-        <div id="main-menu" class="menu-container liquid-glass">
-            <h1>Soren Soar</h1>
-            <p style="color: #aaa; margin-bottom: 30px; letter-spacing: 1px;">HOLD TO FLY UP. RELEASE TO FALL.</p>
-            <button id="btn-play">Initialize Sequence</button>
-        </div>
-        <div id="death-menu" class="menu-container liquid-glass hidden">
-            <h1 style="color: #ff0055; text-shadow: 0 0 10px #ff0055;">CRITICAL FAILURE</h1>
-            <button id="btn-restart">Reboot System</button>
-        </div>
-        <div id="win-menu" class="menu-container liquid-glass hidden">
-            <h1 style="color: #00ff88; text-shadow: 0 0 10px #00ff88;">SECTOR CLEARED</h1>
-            <button id="btn-next">Proceed</button>
+            <div id="menu-main" class="menu-overlay active">
+                <div class="menu-box">
+                    <h1 class="menu-title">SOREN SOAR</h1>
+                    <p class="menu-subtitle">A HIGH-FIDELITY AERONAUTICAL SIMULATION</p>
+                    <button id="btn-start" class="btn">INITIALIZE</button>
+                </div>
+            </div>
+
+            <div id="menu-death" class="menu-overlay">
+                <div class="menu-box">
+                    <h1 class="menu-title">DESTROYED</h1>
+                    <p class="menu-subtitle">HULL INTEGRITY COMPROMISED</p>
+                    <button id="btn-restart" class="btn btn--danger">REDEPLOY</button>
+                </div>
+            </div>
+
+            <div id="menu-win" class="menu-overlay">
+                <div class="menu-box">
+                    <h1 class="menu-title" style="filter: drop-shadow(0 0 15px #00ff88);">LEVEL CLEARED</h1>
+                    <p class="menu-subtitle">NAVIGATION SUCCESSFUL</p>
+                    <button id="btn-next" class="btn">NEXT SECTOR</button>
+                </div>
+            </div>
+
         </div>
     </div>
 
 <script>
 /**
- * SOREN SOAR - CORE ENGINE
- * Architecture: Custom Entity Component System / State Machine
+ * =========================================================================================
+ * SOREN SOAR - ADVANCED CORE ENGINE
+ * =========================================================================================
+ * Architecture:
+ * 1. Math/Geometry Data Structures (Vectors, Matrices, AABBs)
+ * 2. Physics Engine (Rigid Body Dynamics, Swept AABB Collision)
+ * 3. Render Pipeline (Parallax Background, Entity Pass, Post-Process FX)
+ * 4. Particle System (Object Pooled, Velocity-aligned)
+ * 5. Level Management (Grid-based parsing, Chunking)
+ * 6. Game State Machine
+ * =========================================================================================
  */
 
-// --- ENGINE CONSTANTS ---
-const CONSTANTS = {
-    GRAVITY: 1800,           
-    THRUST: -3200,           
-    MAX_VEL_Y: 800,          
-    MIN_VEL_Y: -700,         
-    SCROLL_SPEED: 450,       
-    SHIP_SIZE: { w: 38, h: 26 }, 
-    BLOCK_SIZE: 60,          
-    PARTICLE_CAP: 300,
-    CAMERA_OFFSET_X: 250     
+"use strict";
+
+/* =========================================================================================
+   1. CORE CONFIGURATION & CONSTANTS
+   ========================================================================================= */
+
+const CONFIG = {
+    // Canvas & Resolution
+    TARGET_FPS: 60,
+    TIME_STEP: 1 / 60,
+    MAX_FRAME_TIME: 0.25, // Prevent spiral of death on tab unfocus
+    
+    // Physics & Movement (Geometry Dash Ship Constants)
+    // GD ship physics rely on high gravity, high thrust, and strict terminal velocities
+    PHYSICS: {
+        GRAVITY: 3200,             // Pixels per second squared (downward pull)
+        THRUST: -5800,             // Upward acceleration when holding
+        TERMINAL_VEL_DOWN: 950,    // Max falling speed
+        TERMINAL_VEL_UP: -850,     // Max rising speed
+        SCROLL_SPEED_X: 620,       // Horizontal speed of the player
+        CEILING_BOUNCE: 0.0,       // Restitution when hitting the roof
+        FLOOR_BOUNCE: 0.0          // Restitution when hitting the floor
+    },
+
+    // Player Geometry
+    PLAYER: {
+        WIDTH: 44,
+        HEIGHT: 30,
+        HITBOX_SCALE: 0.75,        // Slightly smaller hitbox for forgiving gameplay
+        ROTATION_SPEED: 12,        // Speed at which ship aligns to velocity
+        MAX_ROTATION: Math.PI / 4, // 45 degrees
+        MIN_ROTATION: -Math.PI / 4
+    },
+
+    // World Definition
+    WORLD: {
+        GRID_SIZE: 60,             // 60x60 pixel blocks
+        CEILING_Y: 0,
+        FLOOR_OFFSET: 10,          // Distance from bottom of screen to floor
+        CAMERA_OFFSET_X: 300       // Where the player sits horizontally on screen
+    },
+
+    // Visuals & Particles
+    VISUALS: {
+        TRAIL_LENGTH: 15,
+        PARTICLE_POOL_SIZE: 1000,
+        COLORS: {
+            SHIP_MAIN: '#00e5ff',
+            SHIP_OUTLINE: '#ffffff',
+            BLOCK_MAIN: '#111522',
+            BLOCK_OUTLINE: '#00e5ff',
+            SPIKE_MAIN: '#050a14',
+            SPIKE_OUTLINE: '#ff0055',
+            BG_TOP: '#020205',
+            BG_BOTTOM: '#0a1024'
+        }
+    }
 };
 
-// --- LEVEL DATA ARCHITECTURE ---
-const LEVEL_DATA = [
-    // Level 1: Introduction (Sparse)
-    {
-        bgColors: ['#0a001a', '#1a0033'],
-        map: [
-            "....................................................................................................W",
-            "....................................................................................................W",
-            "....................................................................................................W",
-            ".......................................XXXXXX.......................................................W",
-            ".......................................XXXXXX.......................................................W",
-            ".......................................XXXXXX.......................................................W",
-            "............XXXXX........................................XXXXXXX....................................W",
-            ".........................................................XXXXXXX....................................W",
-            ".........................................................XXXXXXX....................................W",
-            "...........................XXXXX............................................XXXXXXX.................W",
-            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-        ]
-    },
-    // Level 2: Narrow Passages
-    {
-        bgColors: ['#001a0d', '#00331a'],
-        map: [
-            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXW",
-            "XXXXX.........XXXXXXX...................XXXXXXXXX....................XXXXX......................XXXXW",
-            "XXXXX.........XXXXXXX...................XXXXXXXXX....................XXXXX......................XXXXW",
-            "XXXXX.........XXXXXXX.........XXXXX.....XXXXXXXXX......XXXXXXX.......XXXXX......................XXXXW",
-            "........XXX...................XXXXX....................XXXXXXX..................................XXXXW",
-            "........XXX...................XXXXX....................XXXXXXX......................................W",
-            "........XXX.........XXXXXXX.............XXX....................XXXXXXX..............................W",
-            "XXXXXXXXXXXXXXXXX...XXXXXXX.............XXX....................XXXXXXX......................XXXXXXXXW",
-            "XXXXXXXXXXXXXXXXX...XXXXXXX.............XXX....................XXXXXXX......................XXXXXXXXW",
-            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXW"
-        ]
-    },
-    // Level 3: Sawblade Symphony (Simulated with isolated spikes)
-    {
-        bgColors: ['#1a0000', '#330000'],
-        map: [
-            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXW",
-            "...................XX.......................XX.......................XX...........................W",
-            "...................XX.......................XX.......................XX...........................W",
-            "......XX.......................XX.......................XX.......................XX...............W",
-            "......XX.......................XX.......................XX.......................XX...............W",
-            "...................XX.......................XX.......................XX...........................W",
-            "...................XX.......................XX.......................XX...........................W",
-            "......XX.......................XX.......................XX.......................XX...............W",
-            "......XX.......................XX.......................XX.......................XX...............W",
-            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXW"
-        ]
-    },
-    // Level 4: The Wave
-    {
-        bgColors: ['#000022', '#000044'],
-        map: [
-            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXW",
-            "XX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXXXXW",
-            "XXX.......XXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXXXXW",
-            "XXXX.......XXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXXXXW",
-            "XXXXX.......XX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXXXXW",
-            "XXXXXX.......X.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXXXXW",
-            "XXXXXXX..............XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXXXXW",
-            "XXXXXXXX.............XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXXXXW",
-            "XXXXXXXXX............XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXXXXW",
-            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXW"
-        ]
-    },
-    // Level 5: Marathon
-    {
-        bgColors: ['#110022', '#220044'],
-        map: [
-            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXW",
-            "XXXXX......XXXXX.......XX.......XX.......XXXXX.......XXXXX.......XX.......XX.......XXXXX.......XXXXX.......XX.......XX.......XXXXX.......XXXXXW",
-            "XXXXX......XXXXX.......XX.......XX.......XXXXX.......XXXXX.......XX.......XX.......XXXXX.......XXXXX.......XX.......XX.......XXXXX.......XXXXXW",
-            "XXXXX......XXXXX.......XX.......XX.......XXXXX.......XXXXX.......XX.......XX.......XXXXX.......XXXXX.......XX.......XX.......XXXXX.......XXXXXW",
-            ".......XX.......XXXXX.......XX.......XXXXX.......XX.......XXXXX.......XX.......XXXXX.......XX.......XXXXX.......XX.......XXXXX.......XX.......W",
-            ".......XX.......XXXXX.......XX.......XXXXX.......XX.......XXXXX.......XX.......XXXXX.......XX.......XXXXX.......XX.......XXXXX.......XX.......W",
-            ".......XX.......XXXXX.......XX.......XXXXX.......XX.......XXXXX.......XX.......XXXXX.......XX.......XXXXX.......XX.......XXXXX.......XX.......W",
-            "XXXXX......XXXXX.......XX.......XX.......XXXXX.......XXXXX.......XX.......XX.......XXXXX.......XXXXX.......XX.......XX.......XXXXX.......XXXXXW",
-            "XXXXX......XXXXX.......XX.......XX.......XXXXX.......XXXXX.......XX.......XX.......XXXXX.......XXXXX.......XX.......XX.......XXXXX.......XXXXXW",
-            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXW"
-        ]
-    }
-];
+/* =========================================================================================
+   2. MATH & GEOMETRY LIBRARY
+   ========================================================================================= */
 
-// --- UTILITIES ---
 class Vector2 {
-    constructor(x=0, y=0) { this.x = x; this.y = y; }
-    add(v) { this.x += v.x; this.y += v.y; return this; }
-    sub(v) { this.x -= v.x; this.y -= v.y; return this; }
-    mult(n) { this.x *= n; this.y *= n; return this; }
-    mag() { return Math.sqrt(this.x*this.x + this.y*this.y); }
-    normalize() { let m = this.mag(); if(m!==0){ this.mult(1/m); } return this; }
+    constructor(x = 0, y = 0) {
+        this.x = x;
+        this.y = y;
+    }
+    
+    set(x, y) {
+        this.x = x;
+        this.y = y;
+        return this;
+    }
+
+    copy(v) {
+        this.x = v.x;
+        this.y = v.y;
+        return this;
+    }
+
+    clone() {
+        return new Vector2(this.x, this.y);
+    }
+
+    add(v) {
+        this.x += v.x;
+        this.y += v.y;
+        return this;
+    }
+
+    sub(v) {
+        this.x -= v.x;
+        this.y -= v.y;
+        return this;
+    }
+
+    mult(scalar) {
+        this.x *= scalar;
+        this.y *= scalar;
+        return this;
+    }
+
+    div(scalar) {
+        if (scalar !== 0) {
+            this.x /= scalar;
+            this.y /= scalar;
+        }
+        return this;
+    }
+
+    mag() {
+        return Math.sqrt(this.x * this.x + this.y * this.y);
+    }
+
+    magSq() {
+        return this.x * this.x + this.y * this.y;
+    }
+
+    normalize() {
+        const m = this.mag();
+        if (m > 0) this.div(m);
+        return this;
+    }
+
+    distanceTo(v) {
+        const dx = this.x - v.x;
+        const dy = this.y - v.y;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    dot(v) {
+        return this.x * v.x + this.y * v.y;
+    }
+    
+    cross(v) {
+        return this.x * v.y - this.y * v.x;
+    }
 }
 
 class AABB {
-    constructor(x, y, w, h) { this.x = x; this.y = y; this.w = w; this.h = h; }
+    constructor(x, y, w, h) {
+        this.pos = new Vector2(x, y); // Top-left
+        this.size = new Vector2(w, h);
+    }
+
+    get center() {
+        return new Vector2(this.pos.x + this.size.x / 2, this.pos.y + this.size.y / 2);
+    }
+
+    get extents() {
+        return new Vector2(this.size.x / 2, this.size.y / 2);
+    }
+
     intersects(other) {
-        return (this.x < other.x + other.w && this.x + this.w > other.x &&
-                this.y < other.y + other.h && this.y + this.h > other.y);
+        return (
+            this.pos.x < other.pos.x + other.size.x &&
+            this.pos.x + this.size.x > other.pos.x &&
+            this.pos.y < other.pos.y + other.size.y &&
+            this.pos.y + this.size.y > other.pos.y
+        );
+    }
+
+    minkowskiDifference(other) {
+        return new AABB(
+            this.pos.x - (other.pos.x + other.size.x),
+            this.pos.y - (other.pos.y + other.size.y),
+            this.size.x + other.size.x,
+            this.size.y + other.size.y
+        );
+    }
+
+    closestPointOnBounds(point) {
+        let minDist = Math.abs(point.x - this.pos.x);
+        let boundsPoint = new Vector2(this.pos.x, point.y);
+
+        if (Math.abs(this.pos.x + this.size.x - point.x) < minDist) {
+            minDist = Math.abs(this.pos.x + this.size.x - point.x);
+            boundsPoint.set(this.pos.x + this.size.x, point.y);
+        }
+        if (Math.abs(this.pos.y - point.y) < minDist) {
+            minDist = Math.abs(this.pos.y - point.y);
+            boundsPoint.set(point.x, this.pos.y);
+        }
+        if (Math.abs(this.pos.y + this.size.y - point.y) < minDist) {
+            minDist = Math.abs(this.pos.y + this.size.y - point.y);
+            boundsPoint.set(point.x, this.pos.y + this.size.y);
+        }
+        return boundsPoint;
     }
 }
 
-// --- PARTICLE SYSTEM ---
+/* =========================================================================================
+   3. DATA STRUCTURES & POOLS
+   ========================================================================================= */
+
+class ObjectPool {
+    constructor(createFn, initialSize) {
+        this.pool = [];
+        this.createFn = createFn;
+        for (let i = 0; i < initialSize; i++) {
+            this.pool.push(this.createFn());
+        }
+    }
+
+    get() {
+        if (this.pool.length > 0) {
+            return this.pool.pop();
+        }
+        return this.createFn();
+    }
+
+    release(obj) {
+        this.pool.push(obj);
+    }
+}
+
+/* =========================================================================================
+   4. PARTICLE SYSTEM ENGINE
+   ========================================================================================= */
+
 class Particle {
-    constructor(x, y, vx, vy, life, color, size) {
-        this.pos = new Vector2(x, y);
-        this.vel = new Vector2(vx, vy);
+    constructor() {
+        this.pos = new Vector2();
+        this.vel = new Vector2();
+        this.acc = new Vector2();
+        this.life = 0;
+        this.maxLife = 1;
+        this.size = 0;
+        this.startSize = 0;
+        this.color = '#ffffff';
+        this.alpha = 1;
+        this.active = false;
+        this.type = 0; // 0: square, 1: triangle, 2: circle
+        this.rotation = 0;
+        this.rotSpeed = 0;
+    }
+
+    init(x, y, vx, vy, ax, ay, life, size, color, type = 0) {
+        this.pos.set(x, y);
+        this.vel.set(vx, vy);
+        this.acc.set(ax, ay);
         this.life = life;
         this.maxLife = life;
-        this.color = color;
         this.size = size;
+        this.startSize = size;
+        this.color = color;
+        this.type = type;
+        this.rotation = Math.random() * Math.PI * 2;
+        this.rotSpeed = (Math.random() - 0.5) * 10;
         this.active = true;
+        this.alpha = 1;
     }
+
     update(dt) {
+        if (!this.active) return;
+
+        this.vel.add(new Vector2(this.acc.x * dt, this.acc.y * dt));
         this.pos.add(new Vector2(this.vel.x * dt, this.vel.y * dt));
+        this.rotation += this.rotSpeed * dt;
+
         this.life -= dt;
-        if(this.life <= 0) this.active = false;
+        if (this.life <= 0) {
+            this.active = false;
+        } else {
+            const ratio = this.life / this.maxLife;
+            this.alpha = ratio;
+            this.size = this.startSize * ratio;
+        }
     }
-    draw(ctx, camX) {
-        if(!this.active) return;
-        let alpha = Math.max(0, this.life / this.maxLife);
-        ctx.globalAlpha = alpha;
+
+    draw(ctx, cameraX) {
+        if (!this.active) return;
+        
+        const screenX = this.pos.x - cameraX;
+        // Culling
+        if (screenX < -50 || screenX > window.innerWidth + 50) return;
+
+        ctx.globalAlpha = this.alpha;
         ctx.fillStyle = this.color;
-        let s = this.size * alpha;
-        ctx.fillRect(this.pos.x - camX - s/2, this.pos.y - s/2, s, s);
-        ctx.globalAlpha = 1.0;
+        
+        ctx.translate(screenX, this.pos.y);
+        ctx.rotate(this.rotation);
+
+        if (this.type === 0) { // Square
+            ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
+        } else if (this.type === 1) { // Triangle
+            ctx.beginPath();
+            ctx.moveTo(0, -this.size/2);
+            ctx.lineTo(this.size/2, this.size/2);
+            ctx.lineTo(-this.size/2, this.size/2);
+            ctx.closePath();
+            ctx.fill();
+        } else if (this.type === 2) { // Circle
+            ctx.beginPath();
+            ctx.arc(0, 0, this.size/2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.rotate(-this.rotation);
+        ctx.translate(-screenX, -this.pos.y);
+        ctx.globalAlpha = 1;
     }
 }
 
-class ParticleSystem {
+class ParticleManager {
     constructor() {
-        this.particles = [];
+        this.pool = new ObjectPool(() => new Particle(), CONFIG.VISUALS.PARTICLE_POOL_SIZE);
+        this.activeParticles = [];
     }
-    emit(x, y, vx, vy, life, color, size, count=1) {
-        for(let i=0; i<count; i++) {
-            if(this.particles.length < CONSTANTS.PARTICLE_CAP) {
-                this.particles.push(new Particle(
-                    x + (Math.random()-0.5)*10, 
-                    y + (Math.random()-0.5)*10, 
-                    vx + (Math.random()-0.5)*100, 
-                    vy + (Math.random()-0.5)*100, 
-                    life * (0.8 + Math.random()*0.4), 
-                    color, 
-                    size * (0.8 + Math.random()*0.4)
-                ));
+
+    emit(x, y, params) {
+        const p = this.pool.get();
+        p.init(
+            x, y,
+            params.vx || 0, params.vy || 0,
+            params.ax || 0, params.ay || 0,
+            params.life || 1,
+            params.size || 10,
+            params.color || '#ffffff',
+            params.type || 0
+        );
+        this.activeParticles.push(p);
+    }
+
+    emitBurst(x, y, count, params) {
+        for (let i = 0; i < count; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * (params.speedMax || 100) + (params.speedMin || 10);
+            this.emit(x, y, {
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                life: params.life * (0.5 + Math.random() * 0.5),
+                size: params.size * (0.5 + Math.random() * 0.5),
+                color: params.color,
+                type: params.type
+            });
+        }
+    }
+
+    update(dt) {
+        for (let i = this.activeParticles.length - 1; i >= 0; i--) {
+            const p = this.activeParticles[i];
+            p.update(dt);
+            if (!p.active) {
+                this.pool.release(p);
+                this.activeParticles.splice(i, 1);
             }
         }
     }
-    update(dt) {
-        for(let i=this.particles.length-1; i>=0; i--) {
-            this.particles[i].update(dt);
-            if(!this.particles[i].active) this.particles.splice(i, 1);
+
+    draw(ctx, cameraX) {
+        for (let i = 0; i < this.activeParticles.length; i++) {
+            this.activeParticles[i].draw(ctx, cameraX);
         }
     }
-    draw(ctx, camX) {
-        for(let p of this.particles) p.draw(ctx, camX);
+
+    clear() {
+        for (let i = 0; i < this.activeParticles.length; i++) {
+            this.pool.release(this.activeParticles[i]);
+        }
+        this.activeParticles = [];
     }
-    clear() { this.particles = []; }
 }
 
-// --- ENTITIES ---
+/* =========================================================================================
+   5. GAME ENTITIES & PHYSICS
+   ========================================================================================= */
+
 class Player {
-    constructor(x, y) {
-        this.pos = new Vector2(x, y);
-        this.vel = new Vector2(0, 0);
-        this.size = CONSTANTS.SHIP_SIZE;
-        this.rotation = 0;
-        this.isThrusting = false;
-        this.dead = false;
-        this.won = false;
+    constructor() {
+        this.reset();
+        this.trail = [];
     }
-    update(dt) {
-        if(this.dead || this.won) return;
 
-        this.vel.x = CONSTANTS.SCROLL_SPEED;
+    reset(startX = 0, startY = window.innerHeight / 2) {
+        this.pos = new Vector2(startX, startY);
+        this.vel = new Vector2(CONFIG.PHYSICS.SCROLL_SPEED_X, 0);
+        this.acc = new Vector2(0, 0);
+        
+        this.width = CONFIG.PLAYER.WIDTH;
+        this.height = CONFIG.PLAYER.HEIGHT;
+        
+        this.rotation = 0;
+        this.isHolding = false;
+        this.isDead = false;
+        this.hasWon = false;
+        
+        this.trail = [];
+        this.distanceTraveled = 0;
+    }
 
-        if (this.isThrusting) {
-            this.vel.y += CONSTANTS.THRUST * dt;
+    getHitbox() {
+        const hw = (this.width * CONFIG.PLAYER.HITBOX_SCALE) / 2;
+        const hh = (this.height * CONFIG.PLAYER.HITBOX_SCALE) / 2;
+        return new AABB(this.pos.x - hw, this.pos.y - hh, hw * 2, hh * 2);
+    }
+
+    update(dt, floorY) {
+        if (this.isDead || this.hasWon) return;
+
+        // Apply Input Forces (Geometry Dash Ship logic)
+        if (this.isHolding) {
+            this.acc.y = CONFIG.PHYSICS.THRUST;
         } else {
-            this.vel.y += CONSTANTS.GRAVITY * dt;
+            this.acc.y = CONFIG.PHYSICS.GRAVITY;
         }
 
-        if (this.vel.y > CONSTANTS.MAX_VEL_Y) this.vel.y = CONSTANTS.MAX_VEL_Y;
-        if (this.vel.y < CONSTANTS.MIN_VEL_Y) this.vel.y = CONSTANTS.MIN_VEL_Y;
+        // Euler Integration
+        this.vel.y += this.acc.y * dt;
 
+        // Terminal Velocity Clamping
+        if (this.vel.y > CONFIG.PHYSICS.TERMINAL_VEL_DOWN) {
+            this.vel.y = CONFIG.PHYSICS.TERMINAL_VEL_DOWN;
+        } else if (this.vel.y < CONFIG.PHYSICS.TERMINAL_VEL_UP) {
+            this.vel.y = CONFIG.PHYSICS.TERMINAL_VEL_UP;
+        }
+
+        // Position Integration
         this.pos.x += this.vel.x * dt;
         this.pos.y += this.vel.y * dt;
+        
+        this.distanceTraveled = this.pos.x;
 
-        let targetRot = (this.vel.y / CONSTANTS.MAX_VEL_Y) * (Math.PI / 4);
-        this.rotation += (targetRot - this.rotation) * 10 * dt;
+        // Rotation Logic (Pitch based on vertical velocity)
+        // Normalize velocity between max up and max down to get a ratio from -1 to 1
+        let velRatio = this.vel.y / CONFIG.PHYSICS.TERMINAL_VEL_DOWN;
+        
+        // Target rotation based on velocity ratio
+        let targetRot = velRatio * CONFIG.PLAYER.MAX_ROTATION;
+        
+        // Interpolate rotation
+        this.rotation += (targetRot - this.rotation) * CONFIG.PLAYER.ROTATION_SPEED * dt;
+
+        // Floor / Ceiling constraints (Ship glides on floor/ceiling)
+        const hh = this.height / 2;
+        
+        // Ceiling
+        if (this.pos.y - hh < CONFIG.WORLD.CEILING_Y) {
+            this.pos.y = CONFIG.WORLD.CEILING_Y + hh;
+            this.vel.y = 0;
+            this.rotation = 0; // Flatten out
+        }
+        
+        // Floor
+        if (this.pos.y + hh > floorY) {
+            this.pos.y = floorY - hh;
+            this.vel.y = 0;
+            this.rotation = 0; // Flatten out
+        }
+
+        // Update Trail
+        this.trail.unshift({ x: this.pos.x, y: this.pos.y });
+        if (this.trail.length > CONFIG.VISUALS.TRAIL_LENGTH) {
+            this.trail.pop();
+        }
     }
-    draw(ctx, camX) {
-        if(this.dead) return;
+
+    draw(ctx, cameraX) {
+        if (this.isDead) return;
+
+        const screenX = this.pos.x - cameraX;
+
+        // Draw Trail
+        if (this.trail.length > 1) {
+            ctx.beginPath();
+            ctx.moveTo(this.trail[0].x - cameraX, this.trail[0].y);
+            for (let i = 1; i < this.trail.length; i++) {
+                ctx.lineTo(this.trail[i].x - cameraX, this.trail[i].y);
+            }
+            ctx.strokeStyle = `rgba(0, 229, 255, 0.4)`;
+            ctx.lineWidth = 12;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+            
+            // Inner trail
+            ctx.beginPath();
+            ctx.moveTo(this.trail[0].x - cameraX, this.trail[0].y);
+            for (let i = 1; i < this.trail.length; i++) {
+                ctx.lineTo(this.trail[i].x - cameraX, this.trail[i].y);
+            }
+            ctx.strokeStyle = `rgba(255, 255, 255, 0.8)`;
+            ctx.lineWidth = 4;
+            ctx.stroke();
+        }
+
+        // Draw Ship
         ctx.save();
-        ctx.translate(this.pos.x - camX, this.pos.y);
+        ctx.translate(screenX, this.pos.y);
         ctx.rotate(this.rotation);
-        
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = '#00f3ff';
-        
-        ctx.fillStyle = '#00f3ff';
+
+        // Ship shadow/glow
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = CONFIG.VISUALS.COLORS.SHIP_MAIN;
+
+        // Main Hull (Geometry Dash stylized rocket)
+        ctx.fillStyle = CONFIG.VISUALS.COLORS.SHIP_MAIN;
+        ctx.strokeStyle = CONFIG.VISUALS.COLORS.SHIP_OUTLINE;
+        ctx.lineWidth = 3;
+
         ctx.beginPath();
-        ctx.moveTo(this.size.w/2, 0);
-        ctx.lineTo(-this.size.w/2, -this.size.h/2);
-        ctx.lineTo(-this.size.w/4, 0);
-        ctx.lineTo(-this.size.w/2, this.size.h/2);
+        // Nose
+        ctx.moveTo(this.width / 2, 0);
+        // Top curve
+        ctx.lineTo(this.width / 4, -this.height / 2);
+        ctx.lineTo(-this.width / 2, -this.height / 2);
+        // Engine back
+        ctx.lineTo(-this.width / 2 + 5, 0);
+        // Bottom curve
+        ctx.lineTo(-this.width / 2, this.height / 2);
+        ctx.lineTo(this.width / 4, this.height / 2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Cockpit Window
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(this.width / 4, -this.height / 4);
+        ctx.lineTo(0, -this.height / 4);
+        ctx.lineTo(-5, 0);
+        ctx.lineTo(10, 0);
         ctx.closePath();
         ctx.fill();
 
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(-this.size.w/4, -4, 8, 8);
+        // Engine Thruster Nozzle
+        ctx.fillStyle = '#333';
+        ctx.fillRect(-this.width / 2 - 8, -6, 8, 12);
 
         ctx.restore();
     }
-    getCollider() {
-        let padding = 4;
-        return new AABB(this.pos.x - this.size.w/2 + padding, this.pos.y - this.size.h/2 + padding, this.size.w - padding*2, this.size.h - padding*2);
-    }
 }
 
-class Block {
-    constructor(x, y, type) {
+class Obstacle {
+    constructor(type, x, y, size) {
+        this.type = type; // 1: solid block, 2: spike up, 3: spike down, 4: spike right, 5: spike left, 9: end portal
         this.pos = new Vector2(x, y);
-        this.size = CONSTANTS.BLOCK_SIZE;
-        this.type = type; // 'X' = solid, 'W' = win
-    }
-    draw(ctx, camX) {
-        let screenX = this.pos.x - camX;
-        if(screenX < -this.size || screenX > window.innerWidth) return;
+        this.size = size;
+        this.aabb = new AABB(x, y, size, size);
         
-        if (this.type === 'X') {
-            ctx.fillStyle = 'rgba(20, 20, 25, 0.9)';
-            ctx.strokeStyle = '#ff00ea';
+        // Fine-tune hitboxes for specific shapes
+        if (this.type >= 2 && this.type <= 5) {
+            // Spikes have smaller hitboxes
+            const pad = size * 0.3;
+            this.aabb = new AABB(x + pad, y + pad, size - pad*2, size - pad*2);
+        }
+    }
+
+    draw(ctx, cameraX) {
+        const screenX = this.pos.x - cameraX;
+        if (screenX < -this.size || screenX > window.innerWidth) return; // Culling
+
+        ctx.save();
+        ctx.translate(screenX, this.pos.y);
+
+        if (this.type === 1) {
+            // Solid Block
+            ctx.fillStyle = CONFIG.VISUALS.COLORS.BLOCK_MAIN;
+            ctx.strokeStyle = CONFIG.VISUALS.COLORS.BLOCK_OUTLINE;
             ctx.lineWidth = 2;
+            
+            // Neon Glow inside
             ctx.shadowBlur = 10;
-            ctx.shadowColor = '#ff00ea';
-            ctx.fillRect(screenX, this.pos.y, this.size, this.size);
-            ctx.strokeRect(screenX, this.pos.y, this.size, this.size);
+            ctx.shadowColor = CONFIG.VISUALS.COLORS.BLOCK_OUTLINE;
+            
+            ctx.fillRect(0, 0, this.size, this.size);
+            ctx.strokeRect(0, 0, this.size, this.size);
+            
+            // Inner detail
             ctx.shadowBlur = 0;
-        } else if (this.type === 'W') {
-            ctx.fillStyle = 'rgba(0, 255, 136, 0.3)';
-            ctx.fillRect(screenX, this.pos.y, this.size, this.size);
+            ctx.fillStyle = 'rgba(0, 229, 255, 0.1)';
+            ctx.fillRect(5, 5, this.size - 10, this.size - 10);
+            
+        } else if (this.type >= 2 && this.type <= 5) {
+            // Spike
+            ctx.fillStyle = CONFIG.VISUALS.COLORS.SPIKE_MAIN;
+            ctx.strokeStyle = CONFIG.VISUALS.COLORS.SPIKE_OUTLINE;
+            ctx.lineWidth = 2;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = CONFIG.VISUALS.COLORS.SPIKE_OUTLINE;
+
+            ctx.beginPath();
+            
+            // Depending on rotation
+            if (this.type === 2) { // Up
+                ctx.moveTo(this.size / 2, 0);
+                ctx.lineTo(this.size, this.size);
+                ctx.lineTo(0, this.size);
+            } else if (this.type === 3) { // Down
+                ctx.moveTo(this.size / 2, this.size);
+                ctx.lineTo(this.size, 0);
+                ctx.lineTo(0, 0);
+            } else if (this.type === 4) { // Right
+                ctx.moveTo(this.size, this.size / 2);
+                ctx.lineTo(0, 0);
+                ctx.lineTo(0, this.size);
+            } else if (this.type === 5) { // Left
+                ctx.moveTo(0, this.size / 2);
+                ctx.lineTo(this.size, 0);
+                ctx.lineTo(this.size, this.size);
+            }
+            
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            
+        } else if (this.type === 9) {
+            // End Portal / Wall
+            ctx.fillStyle = 'rgba(0, 255, 136, 0.4)';
+            ctx.fillRect(0, 0, this.size, this.size * 50); // Massive wall
         }
-    }
-    getCollider() {
-        return new AABB(this.pos.x, this.pos.y, this.size, this.size);
+
+        ctx.restore();
     }
 }
 
-// --- RENDERING & BACKGROUND ---
-class ParallaxBackground {
-    constructor(colors) {
-        this.layers = [
-            { speed: 0.1, color: colors[0], nodes: [] },
-            { speed: 0.3, color: colors[1], nodes: [] },
-            { speed: 0.6, color: 'rgba(0, 243, 255, 0.1)', nodes: [] }
-        ];
-        this.generateNodes();
-    }
-    generateNodes() {
-        for(let layer of this.layers) {
-            for(let i=0; i<50; i++) {
-                layer.nodes.push({
-                    x: Math.random() * 5000,
-                    y: Math.random() * window.innerHeight,
-                    s: Math.random() * 100 + 50
-                });
-            }
-        }
-    }
-    draw(ctx, camX) {
-        for(let layer of this.layers) {
-            ctx.fillStyle = layer.color;
-            for(let node of layer.nodes) {
-                let x = (node.x - camX * layer.speed) % 5000;
-                if(x < -200) x += 5000;
-                ctx.fillRect(x, node.y, node.s, node.s);
-            }
-        }
-    }
-}
+/* =========================================================================================
+   6. LEVEL DATA & PARSING
+   ========================================================================================= */
 
-// --- GAME STATE MANAGER ---
-class GameManager {
+// Massive level maps. 
+// Character mapping:
+// '.' = empty
+// 'X' = solid block
+// '^' = spike up
+// 'v' = spike down
+// '>' = spike right
+// '<' = spike left
+// 'E' = End
+
+const LEVELS = [
+    // -------------------------------------------------------------------------------------
+    // LEVEL 1: INITIATION
+    // -------------------------------------------------------------------------------------
+    [
+        "........................................................................................................................................................................................................",
+        "........................................................................................................................................................................................................",
+        "........................................................................................................................................................................................................",
+        "........XXXXXXX.........................................................................................................................................................................................",
+        "........XXXXXXX...................................XXXXXXX.....................XXXXXXX...................................................................................................................",
+        "........XXXXXXX...................................XXXXXXX.....................XXXXXXX...................................................................................................................",
+        ".................................XXXXXXX..........XXXXXXX.....................XXXXXXX................................XXXXX....................XXXXX...................................................",
+        ".................................XXXXXXX.............................................................................XXXXX....................XXXXX...................................................",
+        ".................................XXXXXXX.......................................................XXXXXXX...............XXXXX....................XXXXX....................XXXXX..........................",
+        "...............................................................................................XXXXXXX.................................................................XXXXX..........................",
+        "...............................................................................................XXXXXXX.................................................................XXXXX..........................",
+        "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXE"
+    ],
+    // -------------------------------------------------------------------------------------
+    // LEVEL 2: NARROW CORRIDORS
+    // -------------------------------------------------------------------------------------
+    [
+        "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        "...................................................XXXXXXXXX........................................................XXXXXXXXXX........................................................................",
+        "...................................................XXXXXXXXX........................................................XXXXXXXXXX........................................................................",
+        ".........XXXXXXXXX.................................XXXXXXXXX........................................................XXXXXXXXXX.......................XXXXXXXXX........................................",
+        ".........XXXXXXXXX............XXXXX.......................................XXXXXXXXXX...............................................................XXXXXXXXX........................................",
+        ".........XXXXXXXXX............XXXXX.......................................XXXXXXXXXX...............XXXXX...........................................XXXXXXXXX........................................",
+        "..............................XXXXX.......................................XXXXXXXXXX...............XXXXX............................................................................................",
+        "...................................................................................................XXXXX............................................................XXXXXXXXX.......................",
+        "....................................................................................................................................................................XXXXXXXXX.......................",
+        "....................................................................................................................................................................XXXXXXXXX.......................",
+        "....................................................................................................................................................................................................",
+        "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXE"
+    ],
+    // -------------------------------------------------------------------------------------
+    // LEVEL 3: SPIKE TRAPS
+    // -------------------------------------------------------------------------------------
+    [
+        "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        "vvvvvvvvvvvv................................vvvvvvvvvvvv.......................vvvvvvvvvvvv.......................vvvvvvvvvvvv.......................vvvvvvvvvvvv.......................vvvvvvvvvvvv",
+        "........................................................................................................................................................................................................",
+        ".................XXXXXXXXX.......................................XXXXXXXXX.........................XXXXXXXXX.........................XXXXXXXXX.........................XXXXXXXXX......................",
+        ".................XXXXXXXXX.......................................XXXXXXXXX.........................XXXXXXXXX.........................XXXXXXXXX.........................XXXXXXXXX......................",
+        ".................XXXXXXXXX.......................................XXXXXXXXX.........................XXXXXXXXX.........................XXXXXXXXX.........................XXXXXXXXX......................",
+        "........................................................................................................................................................................................................",
+        "........................................................................................................................................................................................................",
+        "........................................................................................................................................................................................................",
+        "^^^^^^^^^^^^................................^^^^^^^^^^^^.......................^^^^^^^^^^^^.......................^^^^^^^^^^^^.......................^^^^^^^^^^^^.......................^^^^^^^^^^^^",
+        "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXE"
+    ],
+    // -------------------------------------------------------------------------------------
+    // LEVEL 4: THE SAWTOOTH
+    // -------------------------------------------------------------------------------------
+    [
+        "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        "XXvvvvvvvvvvvvvvvvvvvXXXXvvvvvvvvvvvvvvvvvvvXXXXvvvvvvvvvvvvvvvvvvvXXXXvvvvvvvvvvvvvvvvvvvXXXXvvvvvvvvvvvvvvvvvvvXXXXvvvvvvvvvvvvvvvvvvvXXXXvvvvvvvvvvvvvvvvvvvXXXXvvvvvvvvvvvvvvvvvvvXXXXvvvvvvvvvvXX",
+        "XX...................XXXX...................XXXX...................XXXX...................XXXX...................XXXX...................XXXX...................XXXX...................XXXX..........XX",
+        "XX...................XXXX...................XXXX...................XXXX...................XXXX...................XXXX...................XXXX...................XXXX...................XXXX..........XX",
+        "XXXXX................XXXXX..................XXXXX..................XXXXX..................XXXXX..................XXXXX..................XXXXX..................XXXXX..................XXXXX........XX",
+        "XXXXX................XXXXX..................XXXXX..................XXXXX..................XXXXX..................XXXXX..................XXXXX..................XXXXX..................XXXXX........XX",
+        "XXXXXXX..............XXXXXXX................XXXXXXX................XXXXXXX................XXXXXXX................XXXXXXX................XXXXXXX................XXXXXXX................XXXXXXX......XX",
+        "XXXXXXX..............XXXXXXX................XXXXXXX................XXXXXXX................XXXXXXX................XXXXXXX................XXXXXXX................XXXXXXX................XXXXXXX......XX",
+        "XXXXXXXXX............XXXXXXXXX..............XXXXXXXXX..............XXXXXXXXX..............XXXXXXXXX..............XXXXXXXXX..............XXXXXXXXX..............XXXXXXXXX..............XXXXXXXXX....XX",
+        "XXXXXXXXX............XXXXXXXXX..............XXXXXXXXX..............XXXXXXXXX..............XXXXXXXXX..............XXXXXXXXX..............XXXXXXXXX..............XXXXXXXXX..............XXXXXXXXX....XX",
+        "XX^^^^^^^^^^^^^^^^^^^XXXX^^^^^^^^^^^^^^^^^^^XXXX^^^^^^^^^^^^^^^^^^^XXXX^^^^^^^^^^^^^^^^^^^XXXX^^^^^^^^^^^^^^^^^^^XXXX^^^^^^^^^^^^^^^^^^^XXXX^^^^^^^^^^^^^^^^^^^XXXX^^^^^^^^^^^^^^^^^^^XXXX^^^^^^^^XX",
+        "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXE"
+    ],
+    // -------------------------------------------------------------------------------------
+    // LEVEL 5: THE GAUNTLET
+    // -------------------------------------------------------------------------------------
+    [
+        "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        "XXXX.................XXXXXXXXXXX.............XXXX...........................XXXXXXXXXXXXXXX....................................................................XXXXXXXXX............................",
+        "XXXX.................XXXXXXXXXXX.............XXXX...........................XXXXXXXXXXXXXXX....................................................................XXXXXXXXX............................",
+        "XXXX.................XXXXXXXXXXX.............XXXX...........................XXXXXXXXXXXXXXX....................................................................XXXXXXXXX............................",
+        "XXXX.................XXXXXXXXXXX.............XXXX...........................XXXXXXXXXXXXXXX...................XXXXXX...........................................XXXXXXXXX............................",
+        "........XXXXXXX......................XXXXX......................XXXXXX.................................XXXXXXXXXXX....................XXXXXX...................XXXXXXXXX............................",
+        "........XXXXXXX......................XXXXX......................XXXXXX.................................XXXXXXXXXXX....................XXXXXX........................................................",
+        "........XXXXXXX......................XXXXX......................XXXXXX.................................XXXXXXXXXXX....................XXXXXX.....................................XXXXXXX............",
+        "........XXXXXXX......................XXXXX......................XXXXXX................................................................XXXXXX.....................................XXXXXXX............",
+        ".................................................................................................................................................................................XXXXXXX............",
+        ".................................................................................................................................................................................XXXXXXX............",
+        "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXE"
+    ]
+];
+
+class LevelManager {
     constructor() {
-        this.canvas = document.getElementById('gameCanvas');
-        this.ctx = this.canvas.getContext('2d', { alpha: false });
-        this.resize();
-        window.addEventListener('resize', () => this.resize());
-
-        this.state = 'MENU'; 
-        this.currentLevelIdx = 0;
-        
-        this.lastTime = 0;
-        this.cameraX = 0;
-        this.levelEndX = 0;
-
-        this.particles = new ParticleSystem();
-        this.player = null;
-        this.blocks = [];
-        this.bg = null;
-
-        this.setupInputs();
-        this.setupUI();
-
-        requestAnimationFrame((t) => this.loop(t));
-    }
-
-    resize() {
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
-    }
-
-    setupInputs() {
-        const handleDown = (e) => {
-            if(e.type==='mousedown' && e.button!==0) return;
-            if(this.state === 'PLAYING' && this.player) this.player.isThrusting = true;
-        };
-        const handleUp = () => {
-            if(this.state === 'PLAYING' && this.player) this.player.isThrusting = false;
-        };
-        
-        window.addEventListener('mousedown', handleDown);
-        window.addEventListener('touchstart', handleDown, {passive: false});
-        window.addEventListener('keydown', (e) => { if(e.code==='Space') handleDown(e); });
-
-        window.addEventListener('mouseup', handleUp);
-        window.addEventListener('touchend', handleUp);
-        window.addEventListener('keyup', (e) => { if(e.code==='Space') handleUp(); });
-    }
-
-    setupUI() {
-        document.getElementById('btn-play').addEventListener('click', () => this.loadLevel(this.currentLevelIdx));
-        document.getElementById('btn-restart').addEventListener('click', () => this.loadLevel(this.currentLevelIdx));
-        document.getElementById('btn-next').addEventListener('click', () => {
-            this.currentLevelIdx = (this.currentLevelIdx + 1) % LEVEL_DATA.length;
-            this.loadLevel(this.currentLevelIdx);
-        });
-    }
-
-    showUI(id) {
-        document.getElementById('main-menu').classList.add('hidden');
-        document.getElementById('death-menu').classList.add('hidden');
-        document.getElementById('win-menu').classList.add('hidden');
-        if(id) document.getElementById(id).classList.remove('hidden');
-        
-        if(id === null) document.getElementById('hud').style.display = 'block';
-        else document.getElementById('hud').style.display = 'none';
+        this.obstacles = [];
+        this.levelLength = 0;
+        this.gridSize = CONFIG.WORLD.GRID_SIZE;
+        this.currentLevelIndex = 0;
     }
 
     loadLevel(index) {
-        let data = LEVEL_DATA[index];
-        this.blocks = [];
-        this.particles.clear();
-        this.bg = new ParallaxBackground(data.bgColors);
+        this.obstacles = [];
+        this.currentLevelIndex = index;
+        const layout = LEVELS[index];
         
-        let startY = window.innerHeight / 2;
-        let mapWidth = 0;
+        // Calculate vertical offset to center the level on screen
+        const mapHeight = layout.length * this.gridSize;
+        const offsetY = (window.innerHeight - mapHeight) / 2;
 
-        let mapH = data.map.length;
-        let mapW = data.map[0].length;
-        let blockS = CONSTANTS.BLOCK_SIZE;
-        let offsetY = (window.innerHeight - (mapH * blockS)) / 2;
+        let maxX = 0;
 
-        for(let r=0; r<mapH; r++) {
-            for(let c=0; c<mapW; c++) {
-                let char = data.map[r][c];
-                if(char === 'X' || char === 'W') {
-                    this.blocks.push(new Block(c * blockS, offsetY + r * blockS, char));
-                }
-            }
-        }
-        
-        this.levelEndX = mapW * blockS;
-        this.player = new Player(0, startY);
-        this.cameraX = -CONSTANTS.CAMERA_OFFSET_X;
-        this.state = 'PLAYING';
-        
-        document.getElementById('level-display').innerText = `LEVEL ${index + 1}`;
-        this.showUI(null);
-    }
+        for (let row = 0; row < layout.length; row++) {
+            for (let col = 0; col < layout[row].length; col++) {
+                const char = layout[row][col];
+                const x = col * this.gridSize;
+                const y = offsetY + row * this.gridSize;
+                
+                if (x > maxX) maxX = x;
 
-    triggerDeath() {
-        this.state = 'DEAD';
-        this.player.dead = true;
-        this.particles.emit(this.player.pos.x, this.player.pos.y, 0, 0, 1.5, '#ff00ea', 10, 50);
-        this.particles.emit(this.player.pos.x, this.player.pos.y, 0, 0, 1.0, '#ffffff', 5, 30);
-        setTimeout(() => this.showUI('death-menu'), 1000);
-    }
+                let type = 0;
+                if (char === 'X') type = 1; // Solid
+                else if (char === '^') type = 2; // Spike Up
+                else if (char === 'v') type = 3; // Spike Down
+                else if (char === '>') type = 4; // Spike Right
+                else if (char === '<') type = 5; // Spike Left
+                else if (char === 'E') type = 9; // End Portal
 
-    triggerWin() {
-        this.state = 'WON';
-        this.player.won = true;
-        this.player.isThrusting = false;
-        setTimeout(() => this.showUI('win-menu'), 1000);
-    }
-
-    updatePhysics(dt) {
-        if(this.state !== 'PLAYING') return;
-
-        this.player.update(dt);
-        this.cameraX = this.player.pos.x - CONSTANTS.CAMERA_OFFSET_X;
-
-        if (this.player.isThrusting) {
-            this.particles.emit(
-                this.player.pos.x - this.player.size.w/2, 
-                this.player.pos.y + 5, 
-                -CONSTANTS.SCROLL_SPEED * 0.8, 
-                this.player.vel.y * 0.5, 
-                0.3, 
-                '#00f3ff', 
-                6, 
-                2
-            );
-        }
-
-        if (this.player.pos.y < 0 || this.player.pos.y > window.innerHeight) {
-            this.triggerDeath();
-            return;
-        }
-
-        let pCol = this.player.getCollider();
-        for(let b of this.blocks) {
-            if(b.pos.x > this.cameraX + window.innerWidth || b.pos.x + b.size < this.cameraX) continue;
-            
-            if(pCol.intersects(b.getCollider())) {
-                if(b.type === 'X') {
-                    this.triggerDeath();
-                    break;
-                } else if(b.type === 'W') {
-                    this.triggerWin();
-                    break;
+                if (type !== 0) {
+                    this.obstacles.push(new Obstacle(type, x, y, this.gridSize));
                 }
             }
         }
 
-        let progress = Math.max(0, Math.min(100, (this.player.pos.x / this.levelEndX) * 100));
-        document.getElementById('progress-fill').style.width = progress + '%';
+        this.levelLength = maxX;
+        return offsetY + mapHeight; // Return calculated floor Y
     }
 
-    render() {
-        this.ctx.fillStyle = '#050510';
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-        if(this.bg) this.bg.draw(this.ctx, this.cameraX);
-
-        for(let b of this.blocks) b.draw(this.ctx, this.cameraX);
-        
-        this.particles.draw(this.ctx, this.cameraX);
-        if(this.player) this.player.draw(this.ctx, this.cameraX);
-    }
-
-    loop(timestamp) {
-        let dt = (timestamp - this.lastTime) / 1000;
-        this.lastTime = timestamp;
-        if(dt > 0.1) dt = 0.1; 
-
-        if(this.state === 'PLAYING' || this.state === 'DEAD' || this.state === 'WON') {
-            if(this.state === 'PLAYING') this.updatePhysics(dt);
-            this.particles.update(dt);
-            this.render();
+    draw(ctx, cameraX) {
+        for (let i = 0; i < this.obstacles.length; i++) {
+            this.obstacles[i].draw(ctx, cameraX);
         }
-
-        requestAnimationFrame((t) => this.loop(t));
     }
 }
 
-window.onload = () => {
-    new GameManager();
-};
+/* =========================================================================================
+   7. PARALLAX BACKGROUND SYSTEM
+   ========================================================================================= */
+
+class ParallaxLayer {
+    constructor(imageType, speed, yOffset, scale, color) {
+        this.speed = speed;
+        this.yOffset = yOffset;
+        this.color = color;
+        this.nodes = [];
+        
+        // Generate abstract geometric nodes for the background
+        for (let i = 0; i < 30; i++) {
+            this.nodes.push({
+                x: Math.random() * 3000,
+                y: Math.random() * window.innerHeight,
+                size: (Math.random() * 100 + 50) * scale,
+                rotation: Math.random() * Math.PI,
+                rotSpeed: (Math.random() - 0.5) * 0.5
+            });
+        }
+    }
+
+    update(dt) {
+        for (let node of this.nodes) {
+            node.rotation += node.rotSpeed * dt;
+        }
+    }
+
+    draw(ctx, cameraX) {
+        ctx.fillStyle = this.color;
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 2;
+
+        for (let node of this.nodes) {
+            // Calculate parallax position with infinite wrapping
+            let x = (node.x - cameraX * this.speed) % 3000;
+            if (x < -200) x += 3000;
+
+            ctx.save();
+            ctx.translate(x, node.y + this.yOffset);
+            ctx.rotate(node.rotation);
+
+            // Draw abstract wireframe boxes
+            ctx.strokeRect(-node.size/2, -node.size/2, node.size, node.size);
+            
+            ctx.restore();
+        }
+    }
+}
+
+class BackgroundManager {
+    constructor() {
+        this.layers = [
+            new ParallaxLayer('geo', 0.1, 0, 0.5, 'rgba(0, 229, 255, 0.05)'),
+            new ParallaxLayer('geo', 0.3, 50, 1.0, 'rgba(0, 229, 255, 0.1)'),
+            new ParallaxLayer('geo', 0.6, 100, 1.5, 'rgba(0, 229, 255, 0.15)')
+        ];
+    }
+
+    update(dt) {
+        for (let layer of this.layers) {
+            layer.update(dt);
+        }
+    }
+
+    draw(ctx, cameraX) {
+        // Gradient Base
+        const grad = ctx.createLinearGradient(0, 0, 0, window.innerHeight);
+        grad.addColorStop(0, CONFIG.VISUALS.COLORS.BG_TOP);
+        grad.addColorStop(1, CONFIG.VISUALS.COLORS.BG_BOTTOM);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+
+        // Parallax Layers
+        for (let layer of this.layers) {
+            layer.draw(ctx, cameraX);
+        }
+        
+        // Floor line
+        ctx.fillStyle = 'rgba(0, 229, 255, 0.2)';
+        ctx.fillRect(0, window.innerHeight - CONFIG.WORLD.FLOOR_OFFSET, window.innerWidth, 2);
+    }
+}
+
+/* =========================================================================================
+   8. CORE GAME ENGINE / STATE MACHINE
+   ========================================================================================= */
+
+class GameEngine {
+    constructor() {
+        // Canvas Setup
+        this.bgCanvas = document.getElementById('bg-canvas');
+        this.mainCanvas = document.getElementById('main-canvas');
+        this.fxCanvas = document.getElementById('fx-canvas');
+        
+        this.bgCtx = this.bgCanvas.getContext('2d', { alpha: false });
+        this.mainCtx = this.mainCanvas.getContext('2d', { alpha: true });
+        this.fxCtx = this.fxCanvas.getContext('2d', { alpha: true });
+        
+        // System Modules
+        this.player = new Player();
+        this.levelManager = new LevelManager();
+        this.bgManager = new BackgroundManager();
+        this.particles = new ParticleManager();
+        
+        // State Variables
+        this.state = 'MENU'; // MENU, PLAYING, DEAD, WON
+        this.cameraX = 0;
+        this.floorY = window.innerHeight - CONFIG.WORLD.FLOOR_OFFSET;
+        this.attempts = 1;
+        this.currentLevel = 0;
+        
+        // Time tracking
+        this.lastTime = 0;
+        this.accumulator = 0;
+
+        // Bindings
+        this.resize = this.resize.bind(this);
+        this.loop = this.loop.bind(this);
+        this.handleInputDown = this.handleInputDown.bind(this);
+        this.handleInputUp = this.handleInputUp.bind(this);
+
+        this.init();
+    }
+
+    init() {
+        window.addEventListener('resize', this.resize);
+        this.resize();
+
+        // Input Listeners
+        window.addEventListener('mousedown', this.handleInputDown);
+        window.addEventListener('touchstart', this.handleInputDown, { passive: false });
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+                this.handleInputDown(e);
+            }
+        });
+
+        window.addEventListener('mouseup', this.handleInputUp);
+        window.addEventListener('touchend', this.handleInputUp);
+        window.addEventListener('keyup', (e) => {
+            if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+                this.handleInputUp(e);
+            }
+        });
+
+        // UI Listeners
+        document.getElementById('btn-start').addEventListener('click', () => this.startLevel(0));
+        document.getElementById('btn-restart').addEventListener('click', () => this.startLevel(this.currentLevel));
+        document.getElementById('btn-next').addEventListener('click', () => {
+            this.currentLevel = (this.currentLevel + 1) % LEVELS.length;
+            this.attempts = 1; // reset attempts for new level
+            this.startLevel(this.currentLevel);
+        });
+
+        // Start Loop
+        requestAnimationFrame(this.loop);
+    }
+
+    resize() {
+        this.bgCanvas.width = this.mainCanvas.width = this.fxCanvas.width = window.innerWidth;
+        this.bgCanvas.height = this.mainCanvas.height = this.fxCanvas.height = window.innerHeight;
+        this.floorY = window.innerHeight - CONFIG.WORLD.FLOOR_OFFSET;
+    }
+
+    setUIState(stateId) {
+        document.querySelectorAll('.menu-overlay').forEach(el => el.classList.remove('active'));
+        if (stateId) {
+            const el = document.getElementById(stateId);
+            if(el) el.classList.add('active');
+        }
+        
+        const hud = document.getElementById('hud');
+        if (this.state === 'PLAYING') {
+            hud.classList.add('active');
+        } else {
+            hud.classList.remove('active');
+        }
+    }
+
+    startLevel(levelIndex) {
+        this.currentLevel = levelIndex;
+        this.floorY = this.levelManager.loadLevel(levelIndex);
+        
+        this.player.reset(0, window.innerHeight / 2);
+        this.cameraX = this.player.pos.x - CONFIG.WORLD.CAMERA_OFFSET_X;
+        this.particles.clear();
+        
+        this.state = 'PLAYING';
+        this.setUIState(null);
+        
+        document.getElementById('hud-attempts').innerText = `ATTEMPT ${this.attempts}`;
+        document.getElementById('hud-percent').innerText = `0%`;
+        document.getElementById('hud-bar').style.width = `0%`;
+    }
+
+    handleInputDown(e) {
+        if (e.type !== 'mousedown' || e.button === 0) {
+            if (this.state === 'PLAYING') {
+                this.player.isHolding = true;
+            }
+        }
+    }
+
+    handleInputUp(e) {
+        if (this.state === 'PLAYING') {
+            this.player.isHolding = false;
+        }
+    }
+
+    die() {
+        this.state = 'DEAD';
+        this.player.isDead = true;
+        this.attempts++;
+        
+        // Death Explosion Particles
+        this.particles.emitBurst(this.player.pos.x, this.player.pos.y, 50, {
+            speedMin: 100, speedMax: 800,
+            life: 1.5, size: 15,
+            color: CONFIG.VISUALS.COLORS.SHIP_MAIN,
+            type: 0
+        });
+        this.particles.emitBurst(this.player.pos.x, this.player.pos.y, 30, {
+            speedMin: 50, speedMax: 500,
+            life: 1.0, size: 8,
+            color: '#ffffff',
+            type: 2
+        });
+
+        setTimeout(() => this.setUIState('menu-death'), 800);
+    }
+
+    win() {
+        this.state = 'WON';
+        this.player.hasWon = true;
+        
+        // Victory Particles
+        this.particles.emitBurst(this.player.pos.x, this.player.pos.y, 100, {
+            speedMin: 200, speedMax: 1000,
+            life: 2.0, size: 20,
+            color: '#00ff88',
+            type: 1
+        });
+
+        setTimeout(() => this.setUIState('menu-win'), 1000);
+    }
+
+    checkCollisions() {
+        const playerBox = this.player.getHitbox();
+
+        for (let obs of this.levelManager.obstacles) {
+            // Broadphase / Culling
+            if (obs.pos.x > this.cameraX + window.innerWidth || obs.pos.x + obs.size < this.cameraX) {
+                continue;
+            }
+
+            if (playerBox.intersects(obs.aabb)) {
+                if (obs.type === 9) {
+                    this.win();
+                    return;
+                } else {
+                    this.die();
+                    return;
+                }
+            }
+        }
+    }
+
+    update(dt) {
+        if (this.state === 'PLAYING') {
+            this.player.update(dt, this.floorY);
+            
+            // Engine thrust particles
+            if (this.player.isHolding) {
+                const nozzleX = this.player.pos.x - this.player.width/2 - 5;
+                const nozzleY = this.player.pos.y;
+                // Calculate position behind the rotated ship
+                const cosR = Math.cos(this.player.rotation);
+                const sinR = Math.sin(this.player.rotation);
+                const offsetX = -this.player.width/2 * cosR;
+                const offsetY = -this.player.width/2 * sinR;
+
+                this.particles.emit(this.player.pos.x + offsetX, this.player.pos.y + offsetY, {
+                    vx: -CONFIG.PHYSICS.SCROLL_SPEED_X * 0.8 + (Math.random() - 0.5) * 100,
+                    vy: this.player.vel.y * 0.2 + (Math.random() - 0.5) * 100,
+                    life: 0.4,
+                    size: 12,
+                    color: (Math.random() > 0.5) ? '#00e5ff' : '#ffffff',
+                    type: 2
+                });
+            }
+
+            this.cameraX = this.player.pos.x - CONFIG.WORLD.CAMERA_OFFSET_X;
+            this.checkCollisions();
+            
+            // Update UI Progress
+            const progress = Math.min(100, Math.max(0, (this.player.pos.x / this.levelManager.levelLength) * 100));
+            document.getElementById('hud-percent').innerText = `${Math.floor(progress)}%`;
+            document.getElementById('hud-bar').style.width = `${progress}%`;
+
+        } else if (this.state === 'WON') {
+            // Keep flying forward smoothly
+            this.player.vel.y *= 0.95; // dampen vertical movement
+            this.player.pos.x += this.player.vel.x * dt;
+            this.player.pos.y += this.player.vel.y * dt;
+            this.player.rotation *= 0.95;
+            this.cameraX = this.player.pos.x - CONFIG.WORLD.CAMERA_OFFSET_X;
+        }
+
+        this.bgManager.update(dt);
+        this.particles.update(dt);
+    }
+
+    render() {
+        // Clear canvases
+        this.mainCtx.clearRect(0, 0, this.mainCanvas.width, this.mainCanvas.height);
+        this.fxCtx.clearRect(0, 0, this.fxCanvas.width, this.fxCanvas.height);
+
+        // Background Layer (Opaque)
+        this.bgManager.draw(this.bgCtx, this.cameraX);
+
+        // Main Layer
+        this.levelManager.draw(this.mainCtx, this.cameraX);
+        this.player.draw(this.mainCtx, this.cameraX);
+
+        // FX Layer (Particles with additive blending)
+        this.particles.draw(this.fxCtx, this.cameraX);
+    }
+
+    loop(timestamp) {
+        let frameTime = (timestamp - this.lastTime) / 1000;
+        this.lastTime = timestamp;
+
+        if (frameTime > CONFIG.MAX_FRAME_TIME) {
+            frameTime = CONFIG.MAX_FRAME_TIME;
+        }
+
+        this.accumulator += frameTime;
+
+        // Fixed timestep for physics stability
+        while (this.accumulator >= CONFIG.TIME_STEP) {
+            this.update(CONFIG.TIME_STEP);
+            this.accumulator -= CONFIG.TIME_STEP;
+        }
+
+        // Interpolation for rendering could go here, but for now direct render
+        this.render();
+
+        requestAnimationFrame(this.loop);
+    }
+}
+
+// =========================================================================================
+// APPLICATION BOOTSTRAP
+// =========================================================================================
+
+window.addEventListener('load', () => {
+    const game = new GameEngine();
+});
+
 </script>
 </body>
 </html>
