@@ -3,30 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Jaaper Dropper</title>
+    <title>Soren Soar</title>
     <style>
-        /* ==========================================================================
-           CSS RESET & BASE STYLES
-           ========================================================================== */
-        html, 
-        body {
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ea;
+        }
+        body, html {
             margin: 0;
             padding: 0;
             width: 100vw;
             height: 100vh;
             overflow: hidden;
-            background-color: #000000;
-            font-family: 'Impact', 'Arial Black', sans-serif;
+            background-color: #050510;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             user-select: none;
             -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
         }
-
-        /* ==========================================================================
-           CANVAS & RENDERING
-           ========================================================================== */
-        #game-canvas {
+        #gameCanvas {
             display: block;
             width: 100%;
             height: 100%;
@@ -35,1391 +31,599 @@
             left: 0;
             z-index: 1;
         }
-
-        /* ==========================================================================
-           UI LAYER & HUD
-           ========================================================================== */
-       #ui-layer {
+        .liquid-glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1), inset 0 0 20px rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+        }
+        #ui-layer {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             z-index: 10;
             pointer-events: none;
-        }
-
-        .hud-container {
             display: flex;
-            justify-content: space-between;
-            padding: 30px 40px;
-            box-sizing: border-box;
-            width: 100%;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
-
-        .hud-panel {
-            background-color: rgba(0, 0, 0, 0.5);
-            border: 4px solid #ffffff;
-            border-radius: 10px;
-            padding: 15px 30px;
-            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.8);
-        }
-
-        .hud-text {
-            font-size: 38px;
-            color: #ffffff;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            margin: 0;
-            padding: 0;
-            text-shadow: 
-                4px 4px 0 #000000,
-                -2px -2px 0 #000000,
-                2px -2px 0 #000000,
-                -2px 2px 0 #000000,
-                2px 2px 0 #000000;
-        }
-
-        #level-value {
-            color: #00ffcc;
-        }
-
-        #fails-value {
-            color: #ff3366;
-        }
-
-        /* ==========================================================================
-           CENTER OVERLAYS (MENUS & MESSAGES)
-           ========================================================================== */
-        #center-overlay {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+        .menu-container {
+            padding: 40px 60px;
             text-align: center;
-            width: 100%;
             pointer-events: auto;
+            transition: opacity 0.3s ease;
         }
-        #login-screen {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.95);
-            border: 5px solid #fff;
-            padding: 50px;
-            border-radius: 15px;
-            text-align: center;
-            pointer-events: auto; /* THIS FIXES THE CLICKING */
-            box-shadow: 0px 0px 50px rgba(0, 255, 204, 0.3);
-            z-index: 1000;
-        }
-        
-        /* Utility to hide UI elements */
-        .hidden { display: none !important; }
-
-        .title-main {
-            font-size: 110px;
-            color: #ffffff;
-            margin: 0;
-            padding: 0;
+        h1 {
+            color: #fff;
+            font-size: 4rem;
+            margin: 0 0 20px 0;
             text-transform: uppercase;
-            letter-spacing: 5px;
-            text-shadow: 
-                6px 6px 0px #000000, 
-                12px 12px 30px rgba(0,0,0,0.9);
-            background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: pulse-color 4s linear infinite;
+            letter-spacing: 4px;
+            text-shadow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue), 0 0 40px var(--neon-pink);
         }
-
-        .title-sub {
-            font-size: 50px;
-            color: #ffffff;
-            text-shadow: 3px 3px 0 #000000;
-            margin-top: 30px;
-            animation: pulse-size 1s infinite alternate ease-in-out;
+        button {
+            background: transparent;
+            color: #fff;
+            font-size: 1.5rem;
+            padding: 15px 40px;
+            border: 2px solid var(--neon-blue);
+            border-radius: 8px;
             cursor: pointer;
-            background-color: rgba(0,0,0,0.6);
-            display: inline-block;
-            padding: 10px 30px;
-            border-radius: 15px;
-            border: 3px solid #ffffff;
-        }
-
-        .title-sub:hover {
-            background-color: rgba(255,255,255,0.2);
-            color: #ffff00;
-        }
-
-        /* ==========================================================================
-           VISUAL EFFECTS
-           ========================================================================== */
-        #speed-lines {
-            position: absolute;
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%;
-            background: radial-gradient(circle, transparent 10%, rgba(0,0,0,0.9) 100%);
-            opacity: 0.6;
-            z-index: 5;
-            pointer-events: none;
-        }
-
-        /* ==========================================================================
-           KEYFRAME ANIMATIONS
-           ========================================================================== */
-        @keyframes pulse-color {
-            0% { filter: hue-rotate(0deg); }
-            100% { filter: hue-rotate(360deg); }
-        }
-
-        @keyframes pulse-size {
-            0% { transform: scale(1); opacity: 0.8; }
-            100% { transform: scale(1.08); opacity: 1; }
-        }
-
-        /* ==========================================================================
-           CONTROLS HINT
-           ========================================================================== */
-        #controls-hint {
-            position: absolute;
-            bottom: 30px;
-            width: 100%;
-            text-align: center;
-            font-size: 24px;
-            color: #aaaaaa;
-            text-shadow: 2px 2px 0px #000000;
+            text-transform: uppercase;
             letter-spacing: 2px;
+            transition: all 0.2s;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2), inset 0 0 10px rgba(0, 243, 255, 0.2);
         }
-
-        /* Mobile UI Optimization */
-        @media screen and (max-height: 500px) {
-            .hud-container { padding: 10px 20px !important; }
-            .hud-panel { padding: 5px 15px !important; background: rgba(0,0,0,0.3) !important; border-width: 2px !important; }
-            .hud-text { font-size: 20px !important; }
-            .title-main { font-size: 60px !important; }
-            .title-sub { font-size: 24px !important; padding: 5px 15px !important; }
+        button:hover {
+            background: var(--neon-blue);
+            color: #000;
+            box-shadow: 0 0 25px var(--neon-blue), inset 0 0 15px var(--neon-blue);
         }
-        #landscape-warning { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; color: #00ffcc; z-index: 9999; text-align: center; justify-content: center; align-items: center; flex-direction: column; font-family: 'Impact'; }
-        #landscape-warning h1 { font-size: 60px; margin: 0; }
-        @media screen and (max-width: 900px) and (orientation: portrait) { #landscape-warning { display: flex !important; } #game-canvas, #ui-layer { display: none !important; } }
-        #joystick-zone { position: absolute; bottom: 30px; left: 30px; width: 150px; height: 150px; z-index: 100; pointer-events: auto; }
-        #joystick-base { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120px; height: 120px; border-radius: 50%; background: rgba(255, 255, 255, 0.1); border: 3px solid rgba(255, 255, 255, 0.3); }
-        #joystick-stick { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60px; height: 60px; border-radius: 50%; background: rgba(0, 255, 204, 0.8); box-shadow: 0 0 20px rgba(0, 255, 204, 1); pointer-events: none; }
-        @media (pointer: fine) { #joystick-zone { display: none !important; } }
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            pointer-events: none;
+            z-index: 5;
+            display: none;
+        }
+        .progress-bar {
+            width: 300px;
+            height: 10px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid var(--glass-border);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .progress-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-pink));
+            box-shadow: 0 0 10px var(--neon-blue);
+        }
+        .hidden { display: none !important; }
     </style>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
-    <canvas id="game-canvas"></canvas>
-    <div id="speed-lines"></div>
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="hud">
+        <div class="liquid-glass" style="padding: 10px 20px;">
+            <div style="color: #fff; font-weight: bold; letter-spacing: 1px;" id="level-display">LEVEL 1</div>
+            <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        </div>
+    </div>
 
     <div id="ui-layer">
-        
-        <div id="login-screen">
-            <h2 style="color:#fff; font-size:45px; margin:0 0 20px 0; text-shadow: 3px 3px 0 #000;">PLAYER LOGIN</h2>
-            <input type="text" id="username-input" placeholder="ENTER USERNAME" maxlength="15" oninput="this.value = this.value.replace(/[^a-zA-Z0-9]/g, '')" style="padding:15px; font-family:'Impact'; font-size:24px; width:250px; margin-bottom:20px; border:3px solid #fff; background:#222; color:#fff; text-align:center;">
-            <br>
-            <button id="load-btn" style="padding:15px 30px; font-family:'Impact'; font-size:24px; background:#00ffcc; border:3px solid #fff; cursor:pointer; margin: 5px; text-shadow: 1px 1px 0 #000;">LOAD SAVE</button>
-            <button id="save-btn" style="padding:15px 30px; font-family:'Impact'; font-size:24px; background:#ff3366; border:3px solid #fff; color:white; cursor:pointer; margin: 5px; text-shadow: 1px 1px 0 #000;">NEW GAME</button>
-            <div id="save-status" style="font-size:22px; color:#ffff00; margin-top:20px; text-shadow: 2px 2px 0px #000; display:none;"></div>
+        <div id="main-menu" class="menu-container liquid-glass">
+            <h1>Soren Soar</h1>
+            <p style="color: #aaa; margin-bottom: 30px; letter-spacing: 1px;">HOLD TO FLY UP. RELEASE TO FALL.</p>
+            <button id="btn-play">Initialize Sequence</button>
         </div>
-
-        <div class="hud-container hidden" id="hud-bar" style="display: flex; justify-content: space-between; padding: 30px 40px; box-sizing: border-box; width: 100%;">
-            <div class="hud-panel">
-                <p class="hud-text">LEVEL: <span id="level-value">1</span>/100</p>
-            </div>
-            <div class="hud-panel">
-                <p class="hud-text">DEATHS: <span id="fails-value">0</span></p>
-            </div>
+        <div id="death-menu" class="menu-container liquid-glass hidden">
+            <h1 style="color: #ff0055; text-shadow: 0 0 10px #ff0055;">CRITICAL FAILURE</h1>
+            <button id="btn-restart">Reboot System</button>
         </div>
-        
-        <div id="center-overlay" class="hidden">
-            <h1 class="title-main" id="title-text">Jaaper Dropper</h1>
-            <div class="title-sub" id="action-text">CLICK OR SPACE TO DROP</div>
+        <div id="win-menu" class="menu-container liquid-glass hidden">
+            <h1 style="color: #00ff88; text-shadow: 0 0 10px #00ff88;">SECTOR CLEARED</h1>
+            <button id="btn-next">Proceed</button>
         </div>
-        
-        <div id="controls-hint" class="hidden">
-            [ W A S D ] OR [ ARROWS ] TO MOVE WHILE FALLING
-        </div>
-        <div id="landscape-warning"><h1>ROTATE PHONE</h1><p style="font-size: 24px; color: #fff;">PLAY IN LANDSCAPE</p></div>
-        <div id="joystick-zone" style="display:none;"><div id="joystick-base"></div><div id="joystick-stick"></div></div>
     </div>
 
 <script>
-const ENGINE_CONFIG = {
-    TUNNEL_WIDTH: 80,
-    TUNNEL_DEPTH_BASE: 1000,
-    TUNNEL_DEPTH_MULT: 150,
-    BASE_GRAVITY: 94.0,
-    MAX_TERMINAL_VELOCITY: 300.0,
-    PLAYER_SIZE: 2.5,
-    PLAYER_SPEED: 300.0,
-    FRICTION: 0.90,
-    CAMERA_SMOOTHING: 0.12,
-    FOV: 95,
-    TOTAL_LEVELS: 100,
-    COLORS: {
-        RAINBOW: Array.from({length: 100}, (_, i) => new THREE.Color().setHSL(i / 100, 1.0, 0.5).getHex()),
-        LAVA: 0xff3300,
-        SAFE: 0x00ffaa,
-        DEATH: 0x111111,
-        GLASS: 0xffffff
-    }
+/**
+ * SOREN SOAR - CORE ENGINE
+ * Architecture: Custom Entity Component System / State Machine
+ */
+
+// --- ENGINE CONSTANTS ---
+const CONSTANTS = {
+    GRAVITY: 1800,           
+    THRUST: -3200,           
+    MAX_VEL_Y: 800,          
+    MIN_VEL_Y: -700,         
+    SCROLL_SPEED: 450,       
+    SHIP_SIZE: { w: 38, h: 26 }, 
+    BLOCK_SIZE: 60,          
+    PARTICLE_CAP: 300,
+    CAMERA_OFFSET_X: 250     
 };
 
-const GAME_STATES = {
-    BOOT: "BOOT",
-    LOGIN: "LOGIN", 
-    MENU: "MENU",
-    PLAYING: "PLAYING",
-    DYING: "DYING", 
-    DEAD: "DEAD",
-    VICTORY: "VICTORY",
-    GAME_OVER: "GAME_OVER"
-};
+// --- LEVEL DATA ARCHITECTURE ---
+const LEVEL_DATA = [
+    // Level 1: Introduction (Sparse)
+    {
+        bgColors: ['#0a001a', '#1a0033'],
+        map: [
+            "....................................................................................................W",
+            "....................................................................................................W",
+            "....................................................................................................W",
+            ".......................................XXXXXX.......................................................W",
+            ".......................................XXXXXX.......................................................W",
+            ".......................................XXXXXX.......................................................W",
+            "............XXXXX........................................XXXXXXX....................................W",
+            ".........................................................XXXXXXX....................................W",
+            ".........................................................XXXXXXX....................................W",
+            "...........................XXXXX............................................XXXXXXX.................W",
+            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        ]
+    },
+    // Level 2: Narrow Passages
+    {
+        bgColors: ['#001a0d', '#00331a'],
+        map: [
+            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXW",
+            "XXXXX.........XXXXXXX...................XXXXXXXXX....................XXXXX......................XXXXW",
+            "XXXXX.........XXXXXXX...................XXXXXXXXX....................XXXXX......................XXXXW",
+            "XXXXX.........XXXXXXX.........XXXXX.....XXXXXXXXX......XXXXXXX.......XXXXX......................XXXXW",
+            "........XXX...................XXXXX....................XXXXXXX..................................XXXXW",
+            "........XXX...................XXXXX....................XXXXXXX......................................W",
+            "........XXX.........XXXXXXX.............XXX....................XXXXXXX..............................W",
+            "XXXXXXXXXXXXXXXXX...XXXXXXX.............XXX....................XXXXXXX......................XXXXXXXXW",
+            "XXXXXXXXXXXXXXXXX...XXXXXXX.............XXX....................XXXXXXX......................XXXXXXXXW",
+            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXW"
+        ]
+    },
+    // Level 3: Sawblade Symphony (Simulated with isolated spikes)
+    {
+        bgColors: ['#1a0000', '#330000'],
+        map: [
+            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXW",
+            "...................XX.......................XX.......................XX...........................W",
+            "...................XX.......................XX.......................XX...........................W",
+            "......XX.......................XX.......................XX.......................XX...............W",
+            "......XX.......................XX.......................XX.......................XX...............W",
+            "...................XX.......................XX.......................XX...........................W",
+            "...................XX.......................XX.......................XX...........................W",
+            "......XX.......................XX.......................XX.......................XX...............W",
+            "......XX.......................XX.......................XX.......................XX...............W",
+            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXW"
+        ]
+    },
+    // Level 4: The Wave
+    {
+        bgColors: ['#000022', '#000044'],
+        map: [
+            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXW",
+            "XX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXXXXW",
+            "XXX.......XXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXXXXW",
+            "XXXX.......XXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXXXXW",
+            "XXXXX.......XX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXXXXW",
+            "XXXXXX.......X.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXXXXW",
+            "XXXXXXX..............XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXXXXW",
+            "XXXXXXXX.............XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXXXXW",
+            "XXXXXXXXX............XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXX.......XXXXXXXW",
+            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXW"
+        ]
+    },
+    // Level 5: Marathon
+    {
+        bgColors: ['#110022', '#220044'],
+        map: [
+            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXW",
+            "XXXXX......XXXXX.......XX.......XX.......XXXXX.......XXXXX.......XX.......XX.......XXXXX.......XXXXX.......XX.......XX.......XXXXX.......XXXXXW",
+            "XXXXX......XXXXX.......XX.......XX.......XXXXX.......XXXXX.......XX.......XX.......XXXXX.......XXXXX.......XX.......XX.......XXXXX.......XXXXXW",
+            "XXXXX......XXXXX.......XX.......XX.......XXXXX.......XXXXX.......XX.......XX.......XXXXX.......XXXXX.......XX.......XX.......XXXXX.......XXXXXW",
+            ".......XX.......XXXXX.......XX.......XXXXX.......XX.......XXXXX.......XX.......XXXXX.......XX.......XXXXX.......XX.......XXXXX.......XX.......W",
+            ".......XX.......XXXXX.......XX.......XXXXX.......XX.......XXXXX.......XX.......XXXXX.......XX.......XXXXX.......XX.......XXXXX.......XX.......W",
+            ".......XX.......XXXXX.......XX.......XXXXX.......XX.......XXXXX.......XX.......XXXXX.......XX.......XXXXX.......XX.......XXXXX.......XX.......W",
+            "XXXXX......XXXXX.......XX.......XX.......XXXXX.......XXXXX.......XX.......XX.......XXXXX.......XXXXX.......XX.......XX.......XXXXX.......XXXXXW",
+            "XXXXX......XXXXX.......XX.......XX.......XXXXX.......XXXXX.......XX.......XX.......XXXXX.......XXXXX.......XX.......XX.......XXXXX.......XXXXXW",
+            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXW"
+        ]
+    }
+];
 
-class Vector3D {
-    constructor(x = 0, y = 0, z = 0) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-    }
-    set(x, y, z) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-    }
-    add(v) {
-        this.x += v.x;
-        this.y += v.y;
-        this.z += v.z;
-    }
-    sub(v) {
-        this.x -= v.x;
-        this.y -= v.y;
-        this.z -= v.z;
-    }
-    multiplyScalar(s) {
-        this.x *= s;
-        this.y *= s;
-        this.z *= s;
-    }
-    clone() {
-        return new Vector3D(this.x, this.y, this.z);
-    }
+// --- UTILITIES ---
+class Vector2 {
+    constructor(x=0, y=0) { this.x = x; this.y = y; }
+    add(v) { this.x += v.x; this.y += v.y; return this; }
+    sub(v) { this.x -= v.x; this.y -= v.y; return this; }
+    mult(n) { this.x *= n; this.y *= n; return this; }
+    mag() { return Math.sqrt(this.x*this.x + this.y*this.y); }
+    normalize() { let m = this.mag(); if(m!==0){ this.mult(1/m); } return this; }
 }
 
-class AABB_Collider {
-    constructor(x, y, z, w, h, d) {
-        this.min = new Vector3D();
-        this.max = new Vector3D();
-        this.update(x, y, z, w, h, d);
-    }
-    
-    update(x, y, z, w, h, d) {
-        this.min.set(x - w/2, y - h/2, z - d/2);
-        this.max.set(x + w/2, y + h/2, z + d/2);
-    }
-
+class AABB {
+    constructor(x, y, w, h) { this.x = x; this.y = y; this.w = w; this.h = h; }
     intersects(other) {
-        if (this.max.x < other.min.x || this.min.x > other.max.x) return false;
-        if (this.max.y < other.min.y || this.min.y > other.max.y) return false;
-        if (this.max.z < other.min.z || this.min.z > other.max.z) return false;
-        return true;
+        return (this.x < other.x + other.w && this.x + this.w > other.x &&
+                this.y < other.y + other.h && this.y + this.h > other.y);
     }
 }
 
-class SynthesisEngine {
-    constructor() {
-        this.audioCtx = null;
-        this.masterGain = null;
-        this.isReady = false;
+// --- PARTICLE SYSTEM ---
+class Particle {
+    constructor(x, y, vx, vy, life, color, size) {
+        this.pos = new Vector2(x, y);
+        this.vel = new Vector2(vx, vy);
+        this.life = life;
+        this.maxLife = life;
+        this.color = color;
+        this.size = size;
+        this.active = true;
     }
-
-    initialize() {
-        if (this.isReady) return;
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        this.audioCtx = new AudioContext();
-        this.masterGain = this.audioCtx.createGain();
-        this.masterGain.gain.value = 0.25;
-        this.masterGain.connect(this.audioCtx.destination);
-        this.isReady = true;
+    update(dt) {
+        this.pos.add(new Vector2(this.vel.x * dt, this.vel.y * dt));
+        this.life -= dt;
+        if(this.life <= 0) this.active = false;
     }
-
-    playOscillator(freq, type, duration, vol = 1.0, slideFreq = null) {
-        if (!this.isReady) return;
-        
-        const osc = this.audioCtx.createOscillator();
-        const gainNode = this.audioCtx.createGain();
-        
-        osc.type = type;
-        osc.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
-        
-        if (slideFreq !== null) {
-            osc.frequency.exponentialRampToValueAtTime(slideFreq, this.audioCtx.currentTime + duration);
-        }
-        
-        gainNode.gain.setValueAtTime(vol, this.audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + duration);
-        
-        osc.connect(gainNode);
-        gainNode.connect(this.masterGain);
-        
-        osc.start();
-        osc.stop(this.audioCtx.currentTime + duration);
-    }
-
-    sfxDrop() {
-        this.playOscillator(300, 'square', 0.4, 0.4, 150);
-        setTimeout(() => {
-            this.playOscillator(150, 'sawtooth', 0.6, 0.4, 50);
-        }, 100);
-    }
-
-    sfxHit() {
-        this.playOscillator(120, 'sawtooth', 0.2, 0.8, 10);
-        
-        if (!this.isReady) return;
-        const bufferSize = this.audioCtx.sampleRate * 0.1; 
-        const buffer = this.audioCtx.createBuffer(1, bufferSize, this.audioCtx.sampleRate);
-        for (let i = 0; i < bufferSize; i++) buffer.getChannelData(0)[i] = Math.random() * 2 - 1;
-        const noise = this.audioCtx.createBufferSource(); noise.buffer = buffer;
-        const noiseFilter = this.audioCtx.createBiquadFilter(); noiseFilter.type = 'lowpass'; noiseFilter.frequency.value = 400;
-        noise.connect(noiseFilter); noiseFilter.connect(this.masterGain); noise.start();
-    }
-
-    sfxEpicBoom() {
-        this.playOscillator(80, 'sawtooth', 1.2, 1.5, 5);
-        this.playOscillator(40, 'square', 1.0, 1.0, 1);
-        
-        if (!this.isReady) return;
-        const bufferSize = this.audioCtx.sampleRate * 1.5; 
-        const buffer = this.audioCtx.createBuffer(1, bufferSize, this.audioCtx.sampleRate);
-        for (let i = 0; i < bufferSize; i++) buffer.getChannelData(0)[i] = Math.random() * 2 - 1;
-        const noise = this.audioCtx.createBufferSource(); noise.buffer = buffer;
-        const noiseFilter = this.audioCtx.createBiquadFilter(); noiseFilter.type = 'lowpass'; noiseFilter.frequency.value = 150;
-        noise.connect(noiseFilter); noiseFilter.connect(this.masterGain); noise.start();
-    }
-
-    sfxWin() {
-        this.playOscillator(523.25, 'sine', 0.2, 0.5); 
-        setTimeout(() => this.playOscillator(659.25, 'sine', 0.2, 0.5), 150); 
-        setTimeout(() => this.playOscillator(783.99, 'sine', 0.4, 0.5), 300); 
-        setTimeout(() => this.playOscillator(1046.50, 'sine', 0.6, 0.5), 450); 
-    }
-}
-
-class VirtualJoystick {
-    constructor() {
-        this.zone = document.getElementById('joystick-zone');
-        this.stick = document.getElementById('joystick-stick');
-        this.active = false; this.value = { x: 0, y: 0 }; this.maxRadius = 50;
-        if (!this.zone) return;
-        this.zone.addEventListener('touchstart', (e) => { e.preventDefault(); this.active = true; this.update(e.touches[0]); }, { passive: false });
-        this.zone.addEventListener('touchmove', (e) => { if (this.active) { e.preventDefault(); this.update(e.touches[0]); } }, { passive: false });
-        this.zone.addEventListener('touchend', () => { this.active = false; this.value = { x: 0, y: 0 }; this.stick.style.transform = `translate(-50%, -50%)`; });
-    }
-    update(touch) {
-        const rect = this.zone.getBoundingClientRect();
-        let dx = touch.clientX - (rect.left + rect.width / 2);
-        let dy = touch.clientY - (rect.top + rect.height / 2);
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist > this.maxRadius) { dx = (dx / dist) * this.maxRadius; dy = (dy / dist) * this.maxRadius; }
-        this.stick.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-        this.value = { x: dx / this.maxRadius, y: dy / this.maxRadius };
-    }
-}
-
-class InputManager {
-    constructor() {
-        this.keyState = { KeyW: false, KeyA: false, KeyS: false, KeyD: false, ArrowUp: false, ArrowLeft: false, ArrowDown: false, ArrowRight: false, Space: false };
-        this.actionTriggered = false;
-        this.joystick = new VirtualJoystick();
-        window.addEventListener('keydown', (e) => { if (this.keyState.hasOwnProperty(e.code)) this.keyState[e.code] = true; if (e.code === 'Space') this.actionTriggered = true; });
-        window.addEventListener('keyup', (e) => { if (this.keyState.hasOwnProperty(e.code)) this.keyState[e.code] = false; });
-        window.addEventListener('mousedown', () => this.actionTriggered = true);
-        window.addEventListener('touchstart', (e) => { if (e.target.id !== 'joystick-zone' && e.target.id !== 'joystick-base') this.actionTriggered = true; }, { passive: false });
-    }
-    getHorizontalAxis() {
-        let x = 0, z = 0;
-        if (this.keyState.KeyW || this.keyState.ArrowUp) z -= 1; if (this.keyState.KeyS || this.keyState.ArrowDown) z += 1;
-        if (this.keyState.KeyA || this.keyState.ArrowLeft) x -= 1; if (this.keyState.KeyD || this.keyState.ArrowRight) x += 1;
-        if (x !== 0 && z !== 0) { const len = Math.sqrt(x * x + z * z); x /= len; z /= len; }
-        if (this.joystick && (this.joystick.value.x !== 0 || this.joystick.value.y !== 0)) { x = this.joystick.value.x; z = this.joystick.value.y; }
-        return { x, z };
-    }
-    consumeAction() { if (this.actionTriggered) { this.actionTriggered = false; return true; } return false; }
-}
-
-const ShaderLibrary = {
-    lavaVertex: `
-        varying vec2 vUv;
-        varying vec3 vPos;
-        void main() {
-            vUv = uv;
-            vPos = position;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-    `,
-    lavaFragment: `
-        uniform float time;
-        varying vec2 vUv;
-        varying vec3 vPos;
-
-        float random(vec2 st) {
-            return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
-        }
-
-        void main() {
-            vec2 uv = vUv * 4.0;
-            
-            uv.x += time * 0.5;
-            uv.y += sin(time * 0.2);
-            
-            float noise = random(floor(uv));
-            float smoothNoise = smoothstep(0.2, 0.8, fract(uv.x * uv.y + time));
-            
-            vec3 color1 = vec3(1.0, 0.1, 0.0); 
-            vec3 color2 = vec3(1.0, 0.8, 0.0); 
-            
-            vec3 finalColor = mix(color1, color2, smoothNoise * noise);
-            
-            gl_FragColor = vec4(finalColor, 1.0);
-        }
-    `
-};
-
-class RobloxCharacter {
-    constructor(scene) {
-        this.scene = scene;
-        this.group = new THREE.Group();
-        this.size = ENGINE_CONFIG.PLAYER_SIZE;
-        
-        this.buildCharacterMesh();
-        
-        this.collider = new AABB_Collider(0, 0, 0, this.size * 1.5, this.size * 2.5, this.size * 1.0);
-        this.velocity = new THREE.Vector3(0, 0, 0);
-        
-        this.isDead = false;
-        
-        this.scene.add(this.group);
-    }
-
-    buildCharacterMesh() {
-        const matSkin = new THREE.MeshStandardMaterial({ color: 0xffcc99, roughness: 0.7 });
-        const matShirt = new THREE.MeshStandardMaterial({ color: 0x00ccff, roughness: 0.5 });
-        const matPants = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.9 });
-        
-        this.torso = new THREE.Mesh(new THREE.BoxGeometry(this.size * 1.2, this.size * 1.2, this.size * 0.6), matShirt);
-        this.torso.position.y = 0;
-        this.torso.castShadow = true;
-        this.group.add(this.torso);
-        
-        this.head = new THREE.Mesh(new THREE.BoxGeometry(this.size * 0.8, this.size * 0.8, this.size * 0.8), matSkin);
-        this.head.position.y = this.size * 1.0;
-        this.head.castShadow = true;
-        this.group.add(this.head);
-        
-        const matBlack = new THREE.MeshBasicMaterial({ color: 0x000000 });
-        const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 0.1), matBlack);
-        eyeL.position.set(-0.2, this.size * 1.0, this.size * 0.41);
-        this.group.add(eyeL);
-        
-        const eyeR = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 0.1), matBlack);
-        eyeR.position.set(0.2, this.size * 1.0, this.size * 0.41);
-        this.group.add(eyeR);
-        
-        const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.1, 0.1), matBlack);
-        mouth.position.set(0, this.size * 0.85, this.size * 0.41);
-        this.group.add(mouth);
-
-        this.armL = new THREE.Mesh(new THREE.BoxGeometry(this.size * 0.4, this.size * 1.2, this.size * 0.4), matSkin);
-        this.armL.position.set(-this.size * 0.9, 0, 0);
-        this.armL.rotation.x = Math.PI;
-        this.armL.rotation.z = -0.2;
-        this.armL.castShadow = true;
-        this.group.add(this.armL);
-        
-        this.armR = new THREE.Mesh(new THREE.BoxGeometry(this.size * 0.4, this.size * 1.2, this.size * 0.4), matSkin);
-        this.armR.position.set(this.size * 0.9, 0, 0);
-        this.armR.rotation.x = Math.PI;
-        this.armR.rotation.z = 0.2;
-        this.armR.castShadow = true;
-        this.group.add(this.armR);
-
-        this.legL = new THREE.Mesh(new THREE.BoxGeometry(this.size * 0.55, this.size * 1.2, this.size * 0.55), matPants);
-        this.legL.position.set(-this.size * 0.3, -this.size * 1.2, 0);
-        this.legL.castShadow = true;
-        this.group.add(this.legL);
-
-        this.legR = new THREE.Mesh(new THREE.BoxGeometry(this.size * 0.55, this.size * 1.2, this.size * 0.55), matPants);
-        this.legR.position.set(this.size * 0.3, -this.size * 1.2, 0);
-        this.legR.castShadow = true;
-        this.group.add(this.legR);
-    }
-
-    reset(yPosition) {
-        this.group.position.set(0, yPosition, 0);
-        this.velocity.set(0, 0, 0);
-        this.group.rotation.set(Math.PI/2, 0, 0); 
-        this.group.visible = true;
-        this.isDead = false;
-        this.updateCollider();
-    }
-
-    update(dt, inputAxis, tunnelBoundary) {
-        if (this.isDead) return;
-
-        this.velocity.x += inputAxis.x * ENGINE_CONFIG.PLAYER_SPEED * dt;
-        this.velocity.z += inputAxis.z * ENGINE_CONFIG.PLAYER_SPEED * dt;
-        
-        this.velocity.x *= ENGINE_CONFIG.FRICTION;
-        this.velocity.z *= ENGINE_CONFIG.FRICTION;
-        
-        this.velocity.y -= ENGINE_CONFIG.BASE_GRAVITY * dt;
-        
-        if (this.velocity.y < -ENGINE_CONFIG.MAX_TERMINAL_VELOCITY) {
-            this.velocity.y = -ENGINE_CONFIG.MAX_TERMINAL_VELOCITY;
-        }
-
-        this.group.position.x += this.velocity.x * dt;
-        this.group.position.y += this.velocity.y * dt;
-        this.group.position.z += this.velocity.z * dt;
-
-        const boundaryLimit = (tunnelBoundary / 2) - (this.size * 1.0);
-        
-        if (this.group.position.x > boundaryLimit) {
-            this.group.position.x = boundaryLimit;
-            this.velocity.x = 0;
-        } else if (this.group.position.x < -boundaryLimit) {
-            this.group.position.x = -boundaryLimit;
-            this.velocity.x = 0;
-        }
-        
-        if (this.group.position.z > boundaryLimit) {
-            this.group.position.z = boundaryLimit;
-            this.velocity.z = 0;
-        } else if (this.group.position.z < -boundaryLimit) {
-            this.group.position.z = -boundaryLimit;
-            this.velocity.z = 0;
-        }
-
-        const timeOffset = Date.now() * 0.015;
-        this.armL.rotation.x = Math.PI + Math.sin(timeOffset) * 0.3;
-        this.armR.rotation.x = Math.PI + Math.cos(timeOffset) * 0.3;
-        this.legL.rotation.x = Math.sin(timeOffset * 0.8) * 0.2;
-        this.legR.rotation.x = Math.cos(timeOffset * 0.8) * 0.2;
-        
-        this.group.rotation.y = (this.velocity.x * 0.005);
-        this.group.rotation.z = -(this.velocity.z * 0.005);
-
-        this.updateCollider();
-    }
-
-    updateCollider() {
-        this.collider.update(
-            this.group.position.x,
-            this.group.position.y,
-            this.group.position.z,
-            this.size * 1.5,
-            this.size * 2.5,
-            this.size * 1.0
-        );
-    }
-
-    kill() {
-        this.isDead = true;
-        this.group.visible = false;
-    }
-}
-
-class ObstacleObject {
-    constructor(scene, definition) {
-        this.scene = scene;
-        this.def = definition;
-        
-        const geometry = new THREE.BoxGeometry(this.def.w, this.def.h, this.def.d);
-        let material;
-        
-        if (this.def.type === 'lava') {
-            material = new THREE.ShaderMaterial({
-                vertexShader: ShaderLibrary.lavaVertex,
-                fragmentShader: ShaderLibrary.lavaFragment,
-                uniforms: { time: { value: 0 } }
-            });
-        } else if (this.def.type === 'glass') {
-            material = new THREE.MeshPhysicalMaterial({
-                color: ENGINE_CONFIG.COLORS.GLASS,
-                transmission: 0.9,
-                opacity: 1,
-                transparent: true,
-                roughness: 0.1,
-                ior: 1.5
-            });
-        } else {
-            material = new THREE.MeshStandardMaterial({
-                color: this.def.color || 0xffffff,
-                roughness: 0.3,
-                metalness: 0.2
-            });
-        }
-
-        this.mesh = new THREE.Mesh(geometry, material);
-        this.mesh.position.set(this.def.x, this.def.y, this.def.z);
-        
-        if (this.def.rotX) this.mesh.rotation.x = this.def.rotX;
-        if (this.def.rotY) this.mesh.rotation.y = this.def.rotY;
-        if (this.def.rotZ) this.mesh.rotation.z = this.def.rotZ;
-
-        this.mesh.castShadow = true;
-        this.mesh.receiveShadow = true;
-        
-        this.scene.add(this.mesh);
-        
-        this.collider = new AABB_Collider(
-            this.def.x, this.def.y, this.def.z, 
-            this.def.w, this.def.h, this.def.d
-        );
-        
-        this.timeOffset = Math.random() * 1000;
-        this.initialX = this.def.x;
-        this.initialZ = this.def.z;
-    }
-
-    update(dt, globalTime) {
-        if (this.def.type === 'lava' && this.mesh.material.uniforms) {
-            this.mesh.material.uniforms.time.value = globalTime;
-        }
-
-        if (this.def.moveAxis) {
-            const speed = this.def.moveSpeed || 10;
-            const range = this.def.moveRange || 20;
-            const displacement = Math.sin(globalTime * speed + this.timeOffset) * range;
-            
-            if (this.def.moveAxis === 'x') {
-                this.mesh.position.x = this.initialX + displacement;
-            } else if (this.def.moveAxis === 'z') {
-                this.mesh.position.z = this.initialZ + displacement;
-            }
-            
-            this.collider.update(
-                this.mesh.position.x, 
-                this.mesh.position.y, 
-                this.mesh.position.z, 
-                this.def.w, this.def.h, this.def.d
-            );
-        }
-
-        if (this.def.rotSpeedY) {
-            this.mesh.rotation.y += this.def.rotSpeedY * dt;
-        }
-    }
-
-    destroy() {
-        this.scene.remove(this.mesh);
-        this.mesh.geometry.dispose();
-        this.mesh.material.dispose();
-    }
-}
-
-class RainbowTunnel {
-    constructor(scene, depth, width) {
-        this.scene = scene;
-        this.depth = depth;
-        this.width = width;
-        this.segments = [];
-        
-        this.buildTunnel();
-    }
-
-    buildTunnel() {
-        const segmentHeight = 20;
-        const numSegments = Math.floor(this.depth / segmentHeight);
-        const thickness = 5;
-        
-        for (let i = 0; i < numSegments; i++) {
-            const yPos = -(i * segmentHeight);
-            
-            const colorIndex = i % ENGINE_CONFIG.COLORS.RAINBOW.length;
-            const ringColor = ENGINE_CONFIG.COLORS.RAINBOW[colorIndex];
-            
-            const material = new THREE.MeshStandardMaterial({
-                color: ringColor,
-                roughness: 0.8,
-                metalness: 0.1
-            });
-
-            const w = this.width;
-            
-            const geoN = new THREE.BoxGeometry(w + thickness*2, segmentHeight, thickness);
-            const meshN = new THREE.Mesh(geoN, material);
-            meshN.position.set(0, yPos, -w/2 - thickness/2);
-            meshN.receiveShadow = true;
-            this.scene.add(meshN);
-            this.segments.push(meshN);
-            
-            const geoS = new THREE.BoxGeometry(w + thickness*2, segmentHeight, thickness);
-            const meshS = new THREE.Mesh(geoS, material);
-            meshS.position.set(0, yPos, w/2 + thickness/2);
-            meshS.receiveShadow = true;
-            this.scene.add(meshS);
-            this.segments.push(meshS);
-            
-            const geoE = new THREE.BoxGeometry(thickness, segmentHeight, w);
-            const meshE = new THREE.Mesh(geoE, material);
-            meshE.position.set(w/2 + thickness/2, yPos, 0);
-            meshE.receiveShadow = true;
-            this.scene.add(meshE);
-            this.segments.push(meshE);
-            
-            const geoW = new THREE.BoxGeometry(thickness, segmentHeight, w);
-            const meshW = new THREE.Mesh(geoW, material);
-            meshW.position.set(-w/2 - thickness/2, yPos, 0);
-            meshW.receiveShadow = true;
-            this.scene.add(meshW);
-            this.segments.push(meshW);
-        }
-    }
-
-    destroy() {
-        for (let i = 0; i < this.segments.length; i++) {
-            this.scene.remove(this.segments[i]);
-            this.segments[i].geometry.dispose();
-            this.segments[i].material.dispose();
-        }
-        this.segments = [];
-    }
-}
-
-class SafeZoneTarget {
-    constructor(scene, yPosition, width, depthTotal) {
-        this.scene = scene;
-        this.yPos = yPosition;
-        this.width = width;
-        
-        const safeGeo = new THREE.BoxGeometry(width, 10, width);
-        const safeMat = new THREE.MeshStandardMaterial({
-            color: ENGINE_CONFIG.COLORS.SAFE,
-            transparent: true,
-            opacity: 0.7,
-            roughness: 0.1,
-            metalness: 0.1
-        });
-        this.safeMesh = new THREE.Mesh(safeGeo, safeMat);
-        this.safeMesh.position.set(0, yPosition, 0);
-        this.scene.add(this.safeMesh);
-        
-        const floorWidth = ENGINE_CONFIG.TUNNEL_WIDTH * 2;
-        const floorGeo = new THREE.BoxGeometry(floorWidth, 20, floorWidth);
-        const floorMat = new THREE.MeshStandardMaterial({ color: ENGINE_CONFIG.COLORS.DEATH });
-        this.floorMesh = new THREE.Mesh(floorGeo, floorMat);
-        this.floorMesh.position.set(0, yPosition - 15, 0);
-        this.scene.add(this.floorMesh);
-        
-        this.colliderSafe = new AABB_Collider(0, yPosition, 0, width, 10, width);
-        this.colliderDeath = new AABB_Collider(0, yPosition - 15, 0, floorWidth, 20, floorWidth);
-    }
-
-    destroy() {
-        this.scene.remove(this.safeMesh);
-        this.scene.remove(this.floorMesh);
-        this.safeMesh.geometry.dispose();
-        this.safeMesh.material.dispose();
-        this.floorMesh.geometry.dispose();
-        this.floorMesh.material.dispose();
+    draw(ctx, camX) {
+        if(!this.active) return;
+        let alpha = Math.max(0, this.life / this.maxLife);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = this.color;
+        let s = this.size * alpha;
+        ctx.fillRect(this.pos.x - camX - s/2, this.pos.y - s/2, s, s);
+        ctx.globalAlpha = 1.0;
     }
 }
 
 class ParticleSystem {
-    constructor(scene) {
-        this.scene = scene;
-        this.particles = [];
-        this.baseGeo = new THREE.BoxGeometry(1.5, 1.5, 1.5);
-        this.baseMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-    }
-
-    spawnSplat(position, count, colorHex) {
-        const explosionMat = new THREE.MeshBasicMaterial({ color: colorHex });
-        
-        for (let i = 0; i < count; i++) {
-            const pMesh = new THREE.Mesh(this.baseGeo, explosionMat);
-            
-            pMesh.position.set(
-                position.x + (Math.random() - 0.5) * 5,
-                position.y + (Math.random() - 0.5) * 5,
-                position.z + (Math.random() - 0.5) * 5
-            );
-            
-            this.scene.add(pMesh);
-            
-            this.particles.push({
-                mesh: pMesh,
-                velocity: new THREE.Vector3(
-                    (Math.random() - 0.5) * 60,
-                    (Math.random() * 50) + 10, 
-                    (Math.random() - 0.5) * 60
-                ),
-                life: 1.0,
-                decay: (Math.random() * 0.03) + 0.01
-            });
-        }
-    }
-
-    update(dt) {
-        for (let i = this.particles.length - 1; i >= 0; i--) {
-            let p = this.particles[i];
-            
-            p.velocity.y -= ENGINE_CONFIG.BASE_GRAVITY * dt;
-            
-            p.mesh.position.x += p.velocity.x * dt;
-            p.mesh.position.y += p.velocity.y * dt;
-            p.mesh.position.z += p.velocity.z * dt;
-            
-            p.mesh.rotation.x += dt * 10;
-            p.mesh.rotation.y += dt * 10;
-            
-            p.life -= p.decay;
-            const scale = Math.max(0, p.life);
-            p.mesh.scale.set(scale, scale, scale);
-            
-            if (p.life <= 0) {
-                this.scene.remove(p.mesh);
-                this.particles.splice(i, 1);
-            }
-        }
-    }
-
-    clearAll() {
-        for (let i = 0; i < this.particles.length; i++) {
-            this.scene.remove(this.particles[i].mesh);
-        }
-        this.particles = [];
-    }
-}
-
-class LevelDataBuilder {
-    
-    static buildLevel(levelIndex) {
-        
-        const tw = ENGINE_CONFIG.TUNNEL_WIDTH;
-        const hw = tw / 2;
-        const depth = Math.floor(ENGINE_CONFIG.TUNNEL_DEPTH_BASE + (Math.pow(levelIndex, 1.5) * ENGINE_CONFIG.TUNNEL_DEPTH_MULT));
-        
-        let config = {
-            depth: depth,
-            safeZoneWidth: Math.max(30, 120 - (levelIndex * 0.3)), 
-            obstacles: []
-        };
-
-        const numObstacleLayers = Math.floor(depth / 90) - 2;
-        const spacingY = 230;
-
-        for (let layer = 1; layer <= numObstacleLayers; layer++) {
-            
-            let yPos = -(layer * spacingY) - 50;
-            const colorIdx = Math.floor(Math.random() * ENGINE_CONFIG.COLORS.RAINBOW.length);
-            const layerColor = ENGINE_CONFIG.COLORS.RAINBOW[colorIdx];
-
-            let patternType = Math.floor(Math.random() * 100) + 1;
-            if (levelIndex < 5) patternType = Math.floor(Math.random() * 10) + 1;
-
-            switch(patternType) {
-                case 1: config.obstacles.push({ type: 'solid', x: -hw + 15, y: yPos, z: 0, w: 30, h: 10, d: tw, color: layerColor }); break;
-                case 2: config.obstacles.push({ type: 'solid', x: hw - 15, y: yPos, z: 0, w: 30, h: 10, d: tw, color: layerColor }); break;
-                case 3: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: -hw + 15, w: tw, h: 10, d: 30, color: layerColor }); break;
-                case 4: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: hw - 15, w: tw, h: 10, d: 30, color: layerColor }); break;
-                case 5: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: tw, h: 10, d: 20, color: layerColor }); break;
-                case 6: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: 20, h: 10, d: tw, color: layerColor }); break;
-                case 7: config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 0, w: tw, h: 10, d: 15 }); break;
-                case 8: config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 0, w: 15, h: 10, d: tw }); break;
-                case 9: config.obstacles.push({ type: 'solid', x: -20, y: yPos, z: -20, w: 40, h: 10, d: 40, color: layerColor }); break;
-                case 10: config.obstacles.push({ type: 'solid', x: 20, y: yPos, z: 20, w: 40, h: 10, d: 40, color: layerColor }); break;
-                case 11: config.obstacles.push({ type: 'lava', x: -hw+10, y: yPos, z: 0, w: 20, h: 10, d: tw }); break;
-                case 12: config.obstacles.push({ type: 'lava', x: hw-10, y: yPos, z: 0, w: 20, h: 10, d: tw }); break;
-                case 13: config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: -hw+10, w: tw, h: 10, d: 20 }); break;
-                case 14: config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: hw-10, w: tw, h: 10, d: 20 }); break;
-                case 15: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: tw-10, h: 10, d: tw-10, color: layerColor }); break;
-                case 16: config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 0, w: tw-20, h: 10, d: tw-20 }); break;
-                case 17: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: 10, h: 10, d: 10, color: layerColor }); break;
-                case 18: config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 0, w: 10, h: 10, d: 10 }); break;
-                case 19: config.obstacles.push({ type: 'glass', x: 0, y: yPos, z: 0, w: tw, h: 5, d: tw }); break;
-                case 20: config.obstacles.push({ type: 'glass', x: 0, y: yPos, z: 0, w: 40, h: 5, d: 40 }); break;
-                case 21: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: tw, h: 10, d: 10, rotSpeedY: 1.0, color: layerColor }); break;
-                case 22: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: 10, h: 10, d: tw, rotSpeedY: -1.0, color: layerColor }); break;
-                case 23: config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 0, w: tw, h: 10, d: 10, rotSpeedY: 1.5 }); break;
-                case 24: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: tw/2, h: 10, d: 10, rotSpeedY: 2.0, color: layerColor }); break;
-                case 25: config.obstacles.push({ type: 'solid', x: 20, y: yPos, z: 20, w: 30, h: 10, d: 10, rotSpeedY: 1.0, color: layerColor }); break;
-                case 26: config.obstacles.push({ type: 'solid', x: -20, y: yPos, z: -20, w: 30, h: 10, d: 10, rotSpeedY: -1.0, color: layerColor }); break;
-                case 27: config.obstacles.push({ type: 'lava', x: 20, y: yPos, z: 20, w: 30, h: 10, d: 10, rotSpeedY: 2.0 }); break;
-                case 28: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: tw, h: 60, d: 5, rotSpeedY: 0.5, color: layerColor }); break;
-                case 29: config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 0, w: tw, h: 5, d: tw, rotSpeedY: 0.2 }); break;
-                case 30: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: 20, h: 20, d: tw, rotSpeedY: 3.0, color: layerColor }); break;
-                case 31: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: 20, h: 10, d: 20, moveAxis: 'x', moveSpeed: 2, moveRange: hw-10, color: layerColor }); break;
-                case 32: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: 20, h: 10, d: 20, moveAxis: 'z', moveSpeed: 2, moveRange: hw-10, color: layerColor }); break;
-                case 33: config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 0, w: 20, h: 10, d: 20, moveAxis: 'x', moveSpeed: 3, moveRange: hw-10 }); break;
-                case 34: config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 0, w: 20, h: 10, d: 20, moveAxis: 'z', moveSpeed: 3, moveRange: hw-10 }); break;
-                case 35: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: -20, w: 30, h: 10, d: 10, moveAxis: 'x', moveSpeed: 1.5, moveRange: 20, color: layerColor }); break;
-                case 36: config.obstacles.push({ type: 'solid', x: -20, y: yPos, z: 0, w: 10, h: 10, d: 30, moveAxis: 'z', moveSpeed: 1.5, moveRange: 20, color: layerColor }); break;
-                case 37: config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 0, w: tw, h: 10, d: 10, moveAxis: 'z', moveSpeed: 1, moveRange: 30 }); break;
-                case 38: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: 10, h: 10, d: tw, moveAxis: 'x', moveSpeed: 1, moveRange: 30, color: layerColor }); break;
-                case 39: config.obstacles.push({ type: 'glass', x: 0, y: yPos, z: 0, w: 40, h: 5, d: 40, moveAxis: 'x', moveSpeed: 2, moveRange: 20 }); break;
-                case 40: config.obstacles.push({ type: 'glass', x: 0, y: yPos, z: 0, w: 40, h: 5, d: 40, moveAxis: 'z', moveSpeed: 2, moveRange: 20 }); break;
-                case 41: config.obstacles.push({ type: 'solid', x: -10, y: yPos, z: 0, w: 10, h: 10, d: tw, moveAxis: 'x', moveSpeed: 2, moveRange: 15, color: layerColor }); config.obstacles.push({ type: 'solid', x: 10, y: yPos, z: 0, w: 10, h: 10, d: tw, moveAxis: 'x', moveSpeed: 2, moveRange: -15, color: layerColor }); break;
-                case 42: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: -10, w: tw, h: 10, d: 10, moveAxis: 'z', moveSpeed: 2, moveRange: 15, color: layerColor }); config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 10, w: tw, h: 10, d: 10, moveAxis: 'z', moveSpeed: 2, moveRange: -15, color: layerColor }); break;
-                case 43: config.obstacles.push({ type: 'lava', x: -20, y: yPos, z: 0, w: 15, h: 10, d: 15, moveAxis: 'z', moveSpeed: 2, moveRange: 20 }); config.obstacles.push({ type: 'lava', x: 20, y: yPos, z: 0, w: 15, h: 10, d: 15, moveAxis: 'z', moveSpeed: 2, moveRange: -20 }); break;
-                case 44: config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: -20, w: 15, h: 10, d: 15, moveAxis: 'x', moveSpeed: 2, moveRange: 20 }); config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 20, w: 15, h: 10, d: 15, moveAxis: 'x', moveSpeed: 2, moveRange: -20 }); break;
-                case 45: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: tw, h: 10, d: 10, rotSpeedY: 2.0, color: layerColor }); config.obstacles.push({ type: 'solid', x: 0, y: yPos-20, z: 0, w: tw, h: 10, d: 10, rotSpeedY: -2.0, color: layerColor }); break;
-                case 46: config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 0, w: tw, h: 10, d: 10, rotSpeedY: 2.0 }); config.obstacles.push({ type: 'lava', x: 0, y: yPos-20, z: 0, w: 10, h: 10, d: tw, rotSpeedY: 2.0 }); break;
-                case 47: config.obstacles.push({ type: 'solid', x: 20, y: yPos, z: 20, w: 20, h: 10, d: 20, color: layerColor }); config.obstacles.push({ type: 'solid', x: -20, y: yPos, z: -20, w: 20, h: 10, d: 20, color: layerColor }); break;
-                case 48: config.obstacles.push({ type: 'solid', x: 20, y: yPos, z: -20, w: 20, h: 10, d: 20, color: layerColor }); config.obstacles.push({ type: 'solid', x: -20, y: yPos, z: 20, w: 20, h: 10, d: 20, color: layerColor }); break;
-                case 49: config.obstacles.push({ type: 'lava', x: 20, y: yPos, z: 20, w: 20, h: 10, d: 20 }); config.obstacles.push({ type: 'lava', x: -20, y: yPos, z: -20, w: 20, h: 10, d: 20 }); break;
-                case 50: config.obstacles.push({ type: 'lava', x: 20, y: yPos, z: -20, w: 20, h: 10, d: 20 }); config.obstacles.push({ type: 'lava', x: -20, y: yPos, z: 20, w: 20, h: 10, d: 20 }); break;
-                case 51: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: 60, h: 10, d: 20, color: layerColor }); config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: 20, h: 10, d: 60, color: layerColor }); break;
-                case 52: config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 0, w: 60, h: 10, d: 20 }); config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 0, w: 20, h: 10, d: 60 }); break;
-                case 53: config.obstacles.push({ type: 'glass', x: 0, y: yPos, z: 0, w: 60, h: 5, d: 20 }); config.obstacles.push({ type: 'glass', x: 0, y: yPos, z: 0, w: 20, h: 5, d: 60 }); break;
-                case 54: config.obstacles.push({ type: 'solid', x: -30, y: yPos, z: -30, w: 10, h: 60, d: 10, color: layerColor }); config.obstacles.push({ type: 'solid', x: 30, y: yPos, z: 30, w: 10, h: 60, d: 10, color: layerColor }); break;
-                case 55: config.obstacles.push({ type: 'lava', x: -30, y: yPos, z: 30, w: 15, h: 40, d: 15 }); config.obstacles.push({ type: 'lava', x: 30, y: yPos, z: -30, w: 15, h: 40, d: 15 }); break;
-                case 56: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: tw, h: 10, d: 10, rotY: Math.PI/4, color: layerColor }); break;
-                case 57: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: tw, h: 10, d: 10, rotY: -Math.PI/4, color: layerColor }); break;
-                case 58: config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 0, w: tw, h: 10, d: 10, rotY: Math.PI/4 }); break;
-                case 59: config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 0, w: tw, h: 10, d: 10, rotY: -Math.PI/4 }); break;
-                case 60: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: tw, h: 10, d: 10, rotY: Math.PI/4, color: layerColor }); config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: tw, h: 10, d: 10, rotY: -Math.PI/4, color: layerColor }); break;
-                case 61: config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 0, w: tw, h: 10, d: 10, rotY: Math.PI/4 }); config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 0, w: tw, h: 10, d: 10, rotY: -Math.PI/4 }); break;
-                case 62: config.obstacles.push({ type: 'solid', x: hw-5, y: yPos, z: 0, w: 10, h: 60, d: tw, color: layerColor }); break;
-                case 63: config.obstacles.push({ type: 'solid', x: -hw+5, y: yPos, z: 0, w: 10, h: 60, d: tw, color: layerColor }); break;
-                case 64: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: hw-5, w: tw, h: 60, d: 10, color: layerColor }); break;
-                case 65: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: -hw+5, w: tw, h: 60, d: 10, color: layerColor }); break;
-                case 66: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: 15, h: 10, d: 15, moveAxis: 'x', moveSpeed: 4, moveRange: 30, color: layerColor }); break;
-                case 67: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: 15, h: 10, d: 15, moveAxis: 'z', moveSpeed: 4, moveRange: 30, color: layerColor }); break;
-                case 68: config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 0, w: 15, h: 10, d: 15, moveAxis: 'x', moveSpeed: 5, moveRange: 30 }); break;
-                case 69: config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 0, w: 15, h: 10, d: 15, moveAxis: 'z', moveSpeed: 5, moveRange: 30 }); break;
-                case 70: config.obstacles.push({ type: 'solid', x: 15, y: yPos, z: 15, w: 20, h: 10, d: 20, moveAxis: 'x', moveSpeed: 2, moveRange: 15, color: layerColor }); config.obstacles.push({ type: 'solid', x: -15, y: yPos, z: -15, w: 20, h: 10, d: 20, moveAxis: 'z', moveSpeed: 2, moveRange: 15, color: layerColor }); break;
-                case 71: config.obstacles.push({ type: 'glass', x: 15, y: yPos, z: 15, w: 20, h: 5, d: 20, moveAxis: 'x', moveSpeed: 2, moveRange: 15 }); config.obstacles.push({ type: 'glass', x: -15, y: yPos, z: -15, w: 20, h: 5, d: 20, moveAxis: 'z', moveSpeed: 2, moveRange: 15 }); break;
-                case 72: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: 50, h: 10, d: 50, rotSpeedY: 0.5, color: layerColor }); break;
-                case 73: config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 0, w: 50, h: 10, d: 50, rotSpeedY: -0.5 }); break;
-                case 74: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: 30, h: 10, d: 30, rotSpeedY: 1.5, moveAxis: 'x', moveSpeed: 1, moveRange: 15, color: layerColor }); break;
-                case 75: config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 0, w: 30, h: 10, d: 30, rotSpeedY: -1.5, moveAxis: 'z', moveSpeed: 1, moveRange: 15 }); break;
-                case 76: config.obstacles.push({ type: 'solid', x: -20, y: yPos, z: -20, w: 10, h: 10, d: 10, color: layerColor }); config.obstacles.push({ type: 'solid', x: 0, y: yPos-20, z: 0, w: 10, h: 10, d: 10, color: layerColor }); config.obstacles.push({ type: 'solid', x: 20, y: yPos-40, z: 20, w: 10, h: 10, d: 10, color: layerColor }); break;
-                case 77: config.obstacles.push({ type: 'lava', x: 20, y: yPos, z: -20, w: 10, h: 10, d: 10 }); config.obstacles.push({ type: 'lava', x: 0, y: yPos-20, z: 0, w: 10, h: 10, d: 10 }); config.obstacles.push({ type: 'lava', x: -20, y: yPos-40, z: 20, w: 10, h: 10, d: 10 }); break;
-                case 78: config.obstacles.push({ type: 'solid', x: -10, y: yPos, z: -10, w: 20, h: 10, d: 20, color: layerColor }); config.obstacles.push({ type: 'lava', x: 10, y: yPos, z: 10, w: 20, h: 10, d: 20 }); break;
-                case 79: config.obstacles.push({ type: 'glass', x: -10, y: yPos, z: 10, w: 20, h: 5, d: 20 }); config.obstacles.push({ type: 'lava', x: 10, y: yPos, z: -10, w: 20, h: 10, d: 20 }); break;
-                case 80: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: tw, h: 10, d: 5, moveAxis: 'z', moveSpeed: 3, moveRange: 35, color: layerColor }); break;
-                case 81: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: 5, h: 10, d: tw, moveAxis: 'x', moveSpeed: 3, moveRange: 35, color: layerColor }); break;
-                case 82: config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 0, w: tw, h: 5, d: 5, moveAxis: 'z', moveSpeed: 4, moveRange: 35 }); break;
-                case 83: config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 0, w: 5, h: 5, d: tw, moveAxis: 'x', moveSpeed: 4, moveRange: 35 }); break;
-                case 84: config.obstacles.push({ type: 'solid', x: -20, y: yPos, z: 0, w: 10, h: 20, d: 10, rotSpeedY: 2.0, color: layerColor }); config.obstacles.push({ type: 'solid', x: 20, y: yPos, z: 0, w: 10, h: 20, d: 10, rotSpeedY: 2.0, color: layerColor }); break;
-                case 85: config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: -20, w: 10, h: 20, d: 10, rotSpeedY: -2.0 }); config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 20, w: 10, h: 20, d: 10, rotSpeedY: -2.0 }); break;
-                case 86: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: 60, h: 5, d: 60, rotSpeedY: 0.2, moveAxis: 'x', moveSpeed: 0.5, moveRange: 10, color: layerColor }); break;
-                case 87: config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 0, w: 60, h: 5, d: 60, rotSpeedY: -0.2, moveAxis: 'z', moveSpeed: 0.5, moveRange: 10 }); break;
-                case 88: config.obstacles.push({ type: 'glass', x: 0, y: yPos, z: 0, w: 60, h: 5, d: 60, rotSpeedY: 0.5, moveAxis: 'x', moveSpeed: 1, moveRange: 10 }); break;
-                case 89: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: 10, h: 10, d: 10, color: layerColor }); config.obstacles.push({ type: 'lava', x: 0, y: yPos-10, z: 0, w: 20, h: 10, d: 20 }); config.obstacles.push({ type: 'glass', x: 0, y: yPos-20, z: 0, w: 30, h: 5, d: 30 }); break;
-                case 90: config.obstacles.push({ type: 'lava', x: -10, y: yPos, z: -10, w: 10, h: 10, d: 10 }); config.obstacles.push({ type: 'lava', x: 10, y: yPos, z: -10, w: 10, h: 10, d: 10 }); config.obstacles.push({ type: 'lava', x: -10, y: yPos, z: 10, w: 10, h: 10, d: 10 }); config.obstacles.push({ type: 'lava', x: 10, y: yPos, z: 10, w: 10, h: 10, d: 10 }); break;
-                case 91: config.obstacles.push({ type: 'solid', x: -15, y: yPos, z: -15, w: 15, h: 10, d: 15, color: layerColor }); config.obstacles.push({ type: 'solid', x: 15, y: yPos, z: -15, w: 15, h: 10, d: 15, color: layerColor }); config.obstacles.push({ type: 'solid', x: -15, y: yPos, z: 15, w: 15, h: 10, d: 15, color: layerColor }); config.obstacles.push({ type: 'solid', x: 15, y: yPos, z: 15, w: 15, h: 10, d: 15, color: layerColor }); break;
-                case 92: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: 10, h: 60, d: 10, moveAxis: 'x', moveSpeed: 3, moveRange: 20, color: layerColor }); config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: 10, h: 60, d: 10, moveAxis: 'x', moveSpeed: 3, moveRange: -20, color: layerColor }); break;
-                case 93: config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 0, w: 10, h: 60, d: 10, moveAxis: 'z', moveSpeed: 3, moveRange: 20 }); config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 0, w: 10, h: 60, d: 10, moveAxis: 'z', moveSpeed: 3, moveRange: -20 }); break;
-                case 94: config.obstacles.push({ type: 'glass', x: -10, y: yPos, z: 0, w: 15, h: 5, d: 15, moveAxis: 'z', moveSpeed: 2, moveRange: 15 }); config.obstacles.push({ type: 'solid', x: 10, y: yPos, z: 0, w: 15, h: 10, d: 15, moveAxis: 'z', moveSpeed: 2, moveRange: -15, color: layerColor }); break;
-                case 95: config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 0, w: tw, h: 10, d: 10, rotSpeedY: 4.0 }); config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: 10, h: 10, d: tw, rotSpeedY: -4.0, color: layerColor }); break;
-                case 96: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: tw, h: 20, d: 20, moveAxis: 'x', moveSpeed: 4, moveRange: 15, color: layerColor }); config.obstacles.push({ type: 'solid', x: 0, y: yPos-30, z: 0, w: tw, h: 20, d: 20, moveAxis: 'x', moveSpeed: 4, moveRange: -15, color: layerColor }); break;
-                case 97: config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 0, w: 20, h: 20, d: tw, moveAxis: 'z', moveSpeed: 4, moveRange: 15 }); config.obstacles.push({ type: 'lava', x: 0, y: yPos-30, z: 0, w: 20, h: 20, d: tw, moveAxis: 'z', moveSpeed: 4, moveRange: -15 }); break;
-                case 98: config.obstacles.push({ type: 'solid', x: 0, y: yPos, z: 0, w: 50, h: 10, d: 50, color: layerColor }); config.obstacles.push({ type: 'lava', x: 0, y: yPos+5, z: 0, w: 20, h: 5, d: 20 }); break;
-                case 99: config.obstacles.push({ type: 'glass', x: 0, y: yPos, z: 0, w: tw, h: 5, d: tw }); config.obstacles.push({ type: 'lava', x: 0, y: yPos-10, z: 0, w: tw-10, h: 5, d: tw-10 }); config.obstacles.push({ type: 'solid', x: 0, y: yPos-20, z: 0, w: tw-20, h: 10, d: tw-20, color: layerColor }); break;
-                case 100: config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 0, w: tw, h: 10, d: 10, rotSpeedY: 5.0 }); config.obstacles.push({ type: 'lava', x: 0, y: yPos, z: 0, w: 10, h: 10, d: tw, rotSpeedY: -5.0 }); config.obstacles.push({ type: 'solid', x: 0, y: yPos-30, z: 0, w: 20, h: 20, d: 20, color: layerColor }); break;
-            }
-
-            
-        }
-
-        if (levelIndex === 100) {
-            config.depth = 15000;
-            config.safeZoneWidth = 8; 
-            config.obstacles = [];
-            
-            for (let y = -100; y > -14500; y -= 60) {
-                let rSpeed = (y / -14500) * 5.0; 
-                config.obstacles.push({
-                    type: 'lava', x: 0, y: y, z: 0, w: tw * 0.9, h: 5, d: 5, rotSpeedY: rSpeed
-                });
-                config.obstacles.push({
-                    type: 'solid', x: 0, y: y, z: 0, w: 5, h: 5, d: tw * 0.9, color: 0xffffff, rotSpeedY: -rSpeed
-                });
-            }
-        }
-
-        return config;
-    }
-}
-
-// ============================================================================
-// 10. CORE GAME ENGINE LOOP
-// ============================================================================
-
-class GameEngine {
     constructor() {
-        this.canvas = document.getElementById('game-canvas');
-        this.uiLevel = document.getElementById('level-value');
-        this.uiFails = document.getElementById('fails-value');
-        this.overlay = document.getElementById('center-overlay');
-        this.titleMain = document.getElementById('title-text');
-        this.titleSub = document.getElementById('action-text');
-
-        this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: false, powerPreference: "high-performance" });
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        this.renderer.shadowMap.enabled = true;
-        this.renderer.shadowMap.type = THREE.BasicShadowMap;
-        
-        this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x000000);
-        
-        this.scene.fog = new THREE.FogExp2(0x000000, 0.0015);
-
-        this.camera = new THREE.PerspectiveCamera(ENGINE_CONFIG.FOV, window.innerWidth / window.innerHeight, 0.1, 3000);
-        this.cameraOffset = new THREE.Vector3(0, 15, 8);
-
-        this.setupLighting();
-
-        this.input = new InputManager();
-        this.audio = new SynthesisEngine();
-        this.player = new RobloxCharacter(this.scene);
-        this.particles = new ParticleSystem(this.scene);
-
-        this.gameState = GAME_STATES.BOOT;
-        this.currentLevel = 1;
-        this.fails = 0;
-        this.clock = new THREE.Clock();
-        this.globalTime = 0;
-        this.deathTimer = 0;
-
-        this.tunnel = null;
-        this.safeZoneTarget = null;
-        this.obstacles = [];
-
-        window.addEventListener('resize', this.onWindowResize.bind(this), false);
-        this.onWindowResize();
-
-        this.setGameState(GAME_STATES.LOGIN);
-        this.gameLoop();
+        this.particles = [];
     }
-
-    setupLighting() {
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-        this.scene.add(ambientLight);
-
-        this.dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        this.dirLight.position.set(20, 50, 20);
-        this.dirLight.castShadow = true;
-        
-        this.dirLight.shadow.mapSize.width = 1024;
-        this.dirLight.shadow.mapSize.height = 1024;
-        this.dirLight.shadow.camera.near = 0.5;
-        this.dirLight.shadow.camera.far = 150;
-        
-        const d = 40;
-        this.dirLight.shadow.camera.left = -d;
-        this.dirLight.shadow.camera.right = d;
-        this.dirLight.shadow.camera.top = d;
-        this.dirLight.shadow.camera.bottom = -d;
-        
-        this.scene.add(this.dirLight);
-
-        this.playerLight = new THREE.PointLight(0xffffff, 0.6, 150);
-        this.scene.add(this.playerLight);
+    emit(x, y, vx, vy, life, color, size, count=1) {
+        for(let i=0; i<count; i++) {
+            if(this.particles.length < CONSTANTS.PARTICLE_CAP) {
+                this.particles.push(new Particle(
+                    x + (Math.random()-0.5)*10, 
+                    y + (Math.random()-0.5)*10, 
+                    vx + (Math.random()-0.5)*100, 
+                    vy + (Math.random()-0.5)*100, 
+                    life * (0.8 + Math.random()*0.4), 
+                    color, 
+                    size * (0.8 + Math.random()*0.4)
+                ));
+            }
+        }
     }
-
-    onWindowResize() {
-        this.camera.aspect = window.innerWidth / window.innerHeight;
-        this.camera.updateProjectionMatrix();
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
+    update(dt) {
+        for(let i=this.particles.length-1; i>=0; i--) {
+            this.particles[i].update(dt);
+            if(!this.particles[i].active) this.particles.splice(i, 1);
+        }
     }
+    draw(ctx, camX) {
+        for(let p of this.particles) p.draw(ctx, camX);
+    }
+    clear() { this.particles = []; }
+}
 
-    setGameState(newState) {
-        this.gameState = newState;
-        if (document.getElementById('joystick-zone')) document.getElementById('joystick-zone').style.display = (newState === GAME_STATES.PLAYING) ? 'block' : 'none';
-        
-        const loginScreen = document.getElementById('login-screen');
-        const overlay = document.getElementById('center-overlay');
-        const hudBar = document.getElementById('hud-bar');
-        const controlsHint = document.getElementById('controls-hint');
+// --- ENTITIES ---
+class Player {
+    constructor(x, y) {
+        this.pos = new Vector2(x, y);
+        this.vel = new Vector2(0, 0);
+        this.size = CONSTANTS.SHIP_SIZE;
+        this.rotation = 0;
+        this.isThrusting = false;
+        this.dead = false;
+        this.won = false;
+    }
+    update(dt) {
+        if(this.dead || this.won) return;
 
-        if (newState === GAME_STATES.PLAYING || newState === GAME_STATES.DYING || newState === GAME_STATES.LOGIN) {
-            overlay.classList.add('hidden');
+        this.vel.x = CONSTANTS.SCROLL_SPEED;
+
+        if (this.isThrusting) {
+            this.vel.y += CONSTANTS.THRUST * dt;
         } else {
-            overlay.classList.remove('hidden');
+            this.vel.y += CONSTANTS.GRAVITY * dt;
         }
 
-        switch (newState) {
-            case GAME_STATES.LOGIN:
-                loginScreen.classList.remove('hidden');
-                hudBar.classList.add('hidden');
-                controlsHint.classList.add('hidden');
-                this.audio.initialize(); 
-                break;
+        if (this.vel.y > CONSTANTS.MAX_VEL_Y) this.vel.y = CONSTANTS.MAX_VEL_Y;
+        if (this.vel.y < CONSTANTS.MIN_VEL_Y) this.vel.y = CONSTANTS.MIN_VEL_Y;
 
-            case GAME_STATES.MENU:
-                loginScreen.classList.add('hidden');
-                hudBar.classList.remove('hidden');
-                controlsHint.classList.remove('hidden');
-                this.titleMain.innerText = "RAINBOW DROPPER";
-                this.titleSub.innerText = "CLICK OR SPACE TO DROP";
-                this.loadLevel(this.currentLevel);
-                break;
-                
-            case GAME_STATES.PLAYING:
-                this.audio.initialize(); 
-                this.audio.sfxDrop();
-                break;
-                
-            case GAME_STATES.DYING:
-                this.deathTimer = 0;
-                this.audio.sfxHit(); 
-                this.player.velocity.set(0,0,0); 
-                document.getElementById('speed-lines').style.background = 'radial-gradient(circle, transparent 10%, rgba(255,0,0,0.8) 100%)';
-                break;
+        this.pos.x += this.vel.x * dt;
+        this.pos.y += this.vel.y * dt;
 
-            case GAME_STATES.DEAD:
-                this.titleMain.innerText = "SPLAT!";
-                this.titleSub.innerText = "PRESS SPACE TO RETRY";
-                this.fails++;
-                this.uiFails.innerText = this.fails;
-                this.audio.sfxEpicBoom(); 
-                this.player.kill();
-                this.particles.spawnSplat(this.player.group.position, 400, 0xff0000);
-                document.body.style.backgroundColor = '#ffffff';
-                document.getElementById('speed-lines').style.background = 'none';
-                setTimeout(() => {
-                    document.body.style.backgroundColor = '#000000';
-                    document.getElementById('speed-lines').style.background = 'radial-gradient(circle, transparent 10%, rgba(0,0,0,0.9) 100%)';
-                }, 150);
-                break;
-                
-            case GAME_STATES.VICTORY:
-                this.titleMain.innerText = "SAFE!";
-                this.titleSub.innerText = "PRESS SPACE TO ADVANCE";
-                this.audio.sfxWin();
-                this.player.velocity.set(0, 0, 0);
-                break;
-                
-            case GAME_STATES.GAME_OVER:
-                this.titleMain.innerText = "100 LEVELS BEATEN";
-                this.titleSub.innerText = "YOU ARE A GOD. REFRESH TO RESTART";
-                this.audio.sfxWin();
-                break;
-        }
+        let targetRot = (this.vel.y / CONSTANTS.MAX_VEL_Y) * (Math.PI / 4);
+        this.rotation += (targetRot - this.rotation) * 10 * dt;
     }
-
-    clearCurrentLevel() {
-        if (this.tunnel) this.tunnel.destroy();
-        if (this.safeZoneTarget) this.safeZoneTarget.destroy();
+    draw(ctx, camX) {
+        if(this.dead) return;
+        ctx.save();
+        ctx.translate(this.pos.x - camX, this.pos.y);
+        ctx.rotate(this.rotation);
         
-        for (let i = 0; i < this.obstacles.length; i++) {
-            this.obstacles[i].destroy();
-        }
-        this.obstacles = [];
-        this.particles.clearAll();
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#00f3ff';
+        
+        ctx.fillStyle = '#00f3ff';
+        ctx.beginPath();
+        ctx.moveTo(this.size.w/2, 0);
+        ctx.lineTo(-this.size.w/2, -this.size.h/2);
+        ctx.lineTo(-this.size.w/4, 0);
+        ctx.lineTo(-this.size.w/2, this.size.h/2);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(-this.size.w/4, -4, 8, 8);
+
+        ctx.restore();
     }
-
-    loadLevel(levelIndex) {
-        this.clearCurrentLevel();
-        
-        this.uiLevel.innerText = levelIndex;
-        
-        const levelData = LevelDataBuilder.buildLevel(levelIndex);
-        
-        this.tunnel = new RainbowTunnel(this.scene, levelData.depth, ENGINE_CONFIG.TUNNEL_WIDTH);
-        
-        for (let i = 0; i < levelData.obstacles.length; i++) {
-            this.obstacles.push(new ObstacleObject(this.scene, levelData.obstacles[i]));
-        }
-
-        this.safeZoneTarget = new SafeZoneTarget(this.scene, -levelData.depth, levelData.safeZoneWidth, levelData.depth);
-
-        this.player.reset(0);
-        
-        this.updateCamera(true);
-    }
-    
-    detectCollisions() { 
-        const pCol = this.player.collider; 
-        for (let obs of this.obstacles) { 
-            if (pCol.intersects(obs.collider)) { 
-                this.setGameState(GAME_STATES.DYING); 
-                return; 
-            } 
-        } 
-        if (pCol.intersects(this.safeZoneTarget.colliderDeath)) { 
-            if (pCol.intersects(this.safeZoneTarget.colliderSafe)) { 
-                this.setGameState(GAME_STATES.VICTORY); 
-            } else { 
-                this.setGameState(GAME_STATES.DYING); 
-            } 
-        } 
-    }
-
-    updateCamera(snap = false) {
-        const targetPos = new THREE.Vector3(0, this.player.group.position.y + 35, 0);
-        
-        if (snap) {
-            this.camera.position.copy(targetPos);
-        } else {
-            this.camera.position.lerp(targetPos, ENGINE_CONFIG.CAMERA_SMOOTHING);
-        }
-        
-        const lookTarget = new THREE.Vector3(0, this.player.group.position.y - 20, 0);
-        this.camera.lookAt(lookTarget);
-
-        this.dirLight.position.set(0, this.player.group.position.y + 30, 0);
-        this.dirLight.target = this.player.group;
-        this.playerLight.position.copy(this.player.group.position);
-    }
-
-    gameLoop() {
-        requestAnimationFrame(this.gameLoop.bind(this));
-        
-        const dt = Math.min(this.clock.getDelta(), 0.05); 
-        this.globalTime += dt;
-
-        switch (this.gameState) {
-            case GAME_STATES.LOGIN:
-                this.camera.position.set(Math.sin(this.globalTime * 0.3) * 40, 20, Math.cos(this.globalTime * 0.3) * 40);
-                this.camera.lookAt(0, -10, 0);
-                break;
-
-            case GAME_STATES.MENU:
-                if (this.input.consumeAction()) {
-                    this.setGameState(GAME_STATES.PLAYING);
-                }
-                this.camera.position.set(Math.sin(this.globalTime * 0.5) * 30, 15, Math.cos(this.globalTime * 0.5) * 30);
-                this.camera.lookAt(0, -20, 0);
-                break;
-
-            case GAME_STATES.PLAYING:
-                const axes = this.input.getHorizontalAxis();
-                this.player.update(dt, axes, ENGINE_CONFIG.TUNNEL_WIDTH);
-                
-                for (let i = 0; i < this.obstacles.length; i++) {
-                    this.obstacles[i].update(dt, this.globalTime);
-                }
-                
-                this.detectCollisions();
-                this.updateCamera();
-                break;
-                
-            case GAME_STATES.DYING:
-                this.deathTimer += dt;
-                this.camera.position.z -= 15 * dt; 
-                this.camera.fov -= 25 * dt; 
-                this.camera.updateProjectionMatrix();
-                
-                if (this.deathTimer > 0.8) { 
-                    this.camera.fov = ENGINE_CONFIG.FOV;
-                    this.camera.updateProjectionMatrix();
-                    this.setGameState(GAME_STATES.DEAD);
-                }
-                break;
-
-            case GAME_STATES.DEAD:
-                this.particles.update(dt);
-                if (this.input.consumeAction()) {
-                    this.loadLevel(this.currentLevel);
-                    this.setGameState(GAME_STATES.PLAYING);
-                }
-                break;
-
-            case GAME_STATES.VICTORY:
-                if (this.input.consumeAction()) {
-                    this.currentLevel++;
-                    fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'save', username: document.getElementById('username-input').value.trim(), level: this.currentLevel }) });
-                    if (this.currentLevel > ENGINE_CONFIG.TOTAL_LEVELS) {
-                        this.setGameState(GAME_STATES.GAME_OVER);
-                    } else {
-                        this.loadLevel(this.currentLevel);
-                        this.setGameState(GAME_STATES.PLAYING);
-                    }
-                }
-                break;
-                
-            case GAME_STATES.GAME_OVER:
-                this.camera.position.x = Math.sin(this.globalTime) * 30;
-                this.camera.position.z = Math.cos(this.globalTime) * 30;
-                this.camera.lookAt(0, this.safeZoneTarget.yPos, 0);
-                break;
-        }
-
-        this.renderer.render(this.scene, this.camera);
+    getCollider() {
+        let padding = 4;
+        return new AABB(this.pos.x - this.size.w/2 + padding, this.pos.y - this.size.h/2 + padding, this.size.w - padding*2, this.size.h - padding*2);
     }
 }
 
-// ============================================================================
-// 11. BOOTSTRAP
-// ============================================================================
+class Block {
+    constructor(x, y, type) {
+        this.pos = new Vector2(x, y);
+        this.size = CONSTANTS.BLOCK_SIZE;
+        this.type = type; // 'X' = solid, 'W' = win
+    }
+    draw(ctx, camX) {
+        let screenX = this.pos.x - camX;
+        if(screenX < -this.size || screenX > window.innerWidth) return;
+        
+        if (this.type === 'X') {
+            ctx.fillStyle = 'rgba(20, 20, 25, 0.9)';
+            ctx.strokeStyle = '#ff00ea';
+            ctx.lineWidth = 2;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#ff00ea';
+            ctx.fillRect(screenX, this.pos.y, this.size, this.size);
+            ctx.strokeRect(screenX, this.pos.y, this.size, this.size);
+            ctx.shadowBlur = 0;
+        } else if (this.type === 'W') {
+            ctx.fillStyle = 'rgba(0, 255, 136, 0.3)';
+            ctx.fillRect(screenX, this.pos.y, this.size, this.size);
+        }
+    }
+    getCollider() {
+        return new AABB(this.pos.x, this.pos.y, this.size, this.size);
+    }
+}
 
-// ============================================================================
-// 11. BOOTSTRAP & SAVE SYSTEM
-// ============================================================================
+// --- RENDERING & BACKGROUND ---
+class ParallaxBackground {
+    constructor(colors) {
+        this.layers = [
+            { speed: 0.1, color: colors[0], nodes: [] },
+            { speed: 0.3, color: colors[1], nodes: [] },
+            { speed: 0.6, color: 'rgba(0, 243, 255, 0.1)', nodes: [] }
+        ];
+        this.generateNodes();
+    }
+    generateNodes() {
+        for(let layer of this.layers) {
+            for(let i=0; i<50; i++) {
+                layer.nodes.push({
+                    x: Math.random() * 5000,
+                    y: Math.random() * window.innerHeight,
+                    s: Math.random() * 100 + 50
+                });
+            }
+        }
+    }
+    draw(ctx, camX) {
+        for(let layer of this.layers) {
+            ctx.fillStyle = layer.color;
+            for(let node of layer.nodes) {
+                let x = (node.x - camX * layer.speed) % 5000;
+                if(x < -200) x += 5000;
+                ctx.fillRect(x, node.y, node.s, node.s);
+            }
+        }
+    }
+}
 
-let dropperGame; 
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbztv7ejAb1k3I5N08-JDKAAlNHHzQbgn1S9i1LkmYcRroa059GVRqfqDd13Ln5Iev91/exec";
+// --- GAME STATE MANAGER ---
+class GameManager {
+    constructor() {
+        this.canvas = document.getElementById('gameCanvas');
+        this.ctx = this.canvas.getContext('2d', { alpha: false });
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+
+        this.state = 'MENU'; 
+        this.currentLevelIdx = 0;
+        
+        this.lastTime = 0;
+        this.cameraX = 0;
+        this.levelEndX = 0;
+
+        this.particles = new ParticleSystem();
+        this.player = null;
+        this.blocks = [];
+        this.bg = null;
+
+        this.setupInputs();
+        this.setupUI();
+
+        requestAnimationFrame((t) => this.loop(t));
+    }
+
+    resize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+    }
+
+    setupInputs() {
+        const handleDown = (e) => {
+            if(e.type==='mousedown' && e.button!==0) return;
+            if(this.state === 'PLAYING' && this.player) this.player.isThrusting = true;
+        };
+        const handleUp = () => {
+            if(this.state === 'PLAYING' && this.player) this.player.isThrusting = false;
+        };
+        
+        window.addEventListener('mousedown', handleDown);
+        window.addEventListener('touchstart', handleDown, {passive: false});
+        window.addEventListener('keydown', (e) => { if(e.code==='Space') handleDown(e); });
+
+        window.addEventListener('mouseup', handleUp);
+        window.addEventListener('touchend', handleUp);
+        window.addEventListener('keyup', (e) => { if(e.code==='Space') handleUp(); });
+    }
+
+    setupUI() {
+        document.getElementById('btn-play').addEventListener('click', () => this.loadLevel(this.currentLevelIdx));
+        document.getElementById('btn-restart').addEventListener('click', () => this.loadLevel(this.currentLevelIdx));
+        document.getElementById('btn-next').addEventListener('click', () => {
+            this.currentLevelIdx = (this.currentLevelIdx + 1) % LEVEL_DATA.length;
+            this.loadLevel(this.currentLevelIdx);
+        });
+    }
+
+    showUI(id) {
+        document.getElementById('main-menu').classList.add('hidden');
+        document.getElementById('death-menu').classList.add('hidden');
+        document.getElementById('win-menu').classList.add('hidden');
+        if(id) document.getElementById(id).classList.remove('hidden');
+        
+        if(id === null) document.getElementById('hud').style.display = 'block';
+        else document.getElementById('hud').style.display = 'none';
+    }
+
+    loadLevel(index) {
+        let data = LEVEL_DATA[index];
+        this.blocks = [];
+        this.particles.clear();
+        this.bg = new ParallaxBackground(data.bgColors);
+        
+        let startY = window.innerHeight / 2;
+        let mapWidth = 0;
+
+        let mapH = data.map.length;
+        let mapW = data.map[0].length;
+        let blockS = CONSTANTS.BLOCK_SIZE;
+        let offsetY = (window.innerHeight - (mapH * blockS)) / 2;
+
+        for(let r=0; r<mapH; r++) {
+            for(let c=0; c<mapW; c++) {
+                let char = data.map[r][c];
+                if(char === 'X' || char === 'W') {
+                    this.blocks.push(new Block(c * blockS, offsetY + r * blockS, char));
+                }
+            }
+        }
+        
+        this.levelEndX = mapW * blockS;
+        this.player = new Player(0, startY);
+        this.cameraX = -CONSTANTS.CAMERA_OFFSET_X;
+        this.state = 'PLAYING';
+        
+        document.getElementById('level-display').innerText = `LEVEL ${index + 1}`;
+        this.showUI(null);
+    }
+
+    triggerDeath() {
+        this.state = 'DEAD';
+        this.player.dead = true;
+        this.particles.emit(this.player.pos.x, this.player.pos.y, 0, 0, 1.5, '#ff00ea', 10, 50);
+        this.particles.emit(this.player.pos.x, this.player.pos.y, 0, 0, 1.0, '#ffffff', 5, 30);
+        setTimeout(() => this.showUI('death-menu'), 1000);
+    }
+
+    triggerWin() {
+        this.state = 'WON';
+        this.player.won = true;
+        this.player.isThrusting = false;
+        setTimeout(() => this.showUI('win-menu'), 1000);
+    }
+
+    updatePhysics(dt) {
+        if(this.state !== 'PLAYING') return;
+
+        this.player.update(dt);
+        this.cameraX = this.player.pos.x - CONSTANTS.CAMERA_OFFSET_X;
+
+        if (this.player.isThrusting) {
+            this.particles.emit(
+                this.player.pos.x - this.player.size.w/2, 
+                this.player.pos.y + 5, 
+                -CONSTANTS.SCROLL_SPEED * 0.8, 
+                this.player.vel.y * 0.5, 
+                0.3, 
+                '#00f3ff', 
+                6, 
+                2
+            );
+        }
+
+        if (this.player.pos.y < 0 || this.player.pos.y > window.innerHeight) {
+            this.triggerDeath();
+            return;
+        }
+
+        let pCol = this.player.getCollider();
+        for(let b of this.blocks) {
+            if(b.pos.x > this.cameraX + window.innerWidth || b.pos.x + b.size < this.cameraX) continue;
+            
+            if(pCol.intersects(b.getCollider())) {
+                if(b.type === 'X') {
+                    this.triggerDeath();
+                    break;
+                } else if(b.type === 'W') {
+                    this.triggerWin();
+                    break;
+                }
+            }
+        }
+
+        let progress = Math.max(0, Math.min(100, (this.player.pos.x / this.levelEndX) * 100));
+        document.getElementById('progress-fill').style.width = progress + '%';
+    }
+
+    render() {
+        this.ctx.fillStyle = '#050510';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        if(this.bg) this.bg.draw(this.ctx, this.cameraX);
+
+        for(let b of this.blocks) b.draw(this.ctx, this.cameraX);
+        
+        this.particles.draw(this.ctx, this.cameraX);
+        if(this.player) this.player.draw(this.ctx, this.cameraX);
+    }
+
+    loop(timestamp) {
+        let dt = (timestamp - this.lastTime) / 1000;
+        this.lastTime = timestamp;
+        if(dt > 0.1) dt = 0.1; 
+
+        if(this.state === 'PLAYING' || this.state === 'DEAD' || this.state === 'WON') {
+            if(this.state === 'PLAYING') this.updatePhysics(dt);
+            this.particles.update(dt);
+            this.render();
+        }
+
+        requestAnimationFrame((t) => this.loop(t));
+    }
+}
 
 window.onload = () => {
-    dropperGame = new GameEngine();
+    new GameManager();
 };
-
-document.getElementById('save-btn').addEventListener('click', () => {
-    if (document.getElementById('save-btn').disabled) return;
-    const user = document.getElementById('username-input').value.trim();
-    if(!user) return alert("ENTER A USERNAME FIRST!");
-    
-    showStatus("SAVING...");
-    document.getElementById('save-btn').disabled = true; setTimeout(() => { document.getElementById('save-btn').disabled = false; }, 5000);
-    
-    fetch(SCRIPT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'save', username: user, level: 1 }) 
-    })
-    .then(r => r.json())
-    .then(data => {
-        dropperGame.currentLevel = 1;
-        dropperGame.setGameState(GAME_STATES.MENU); 
-    })
-    .catch(err => showStatus("ERROR SAVING!"));
-});
-
-document.getElementById('load-btn').addEventListener('click', () => {
-    const user = document.getElementById('username-input').value.trim();
-    if(!user) return alert("ENTER A USERNAME FIRST!");
-    
-    showStatus("LOADING...");
-    
-   fetch(SCRIPT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'load', username: user })
-    })
-    .then(r => r.json())
-    .then(data => {
-        if(data.status === "loaded") {
-            dropperGame.currentLevel = parseInt(data.level);
-            dropperGame.setGameState(GAME_STATES.MENU); 
-        } else {
-            showStatus("NO SAVE FOUND!");
-        }
-    })
-    .catch(err => showStatus("ERROR LOADING!"));
-});
-
-function showStatus(text) {
-    const statusDiv = document.getElementById('save-status');
-    statusDiv.innerText = text;
-    statusDiv.style.display = "block";
-    setTimeout(() => { statusDiv.style.display = "none"; }, 3000);
-}
-
 </script>
 </body>
 </html>
