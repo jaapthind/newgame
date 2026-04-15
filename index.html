@@ -3,92 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Soren Soar - Advanced Geometry Physics Engine</title>
+    <title>Soren Soar - Geometry Engine v5.0</title>
     <style>
-        /* =========================================================================================
-           CORE STYLESHEET
-           Architecture: BEM-inspired, variables for theming, fully responsive
-           ========================================================================================= */
-        
+        /* ====================================================================================================
+           CORE STYLESHEET - GD AUTHENTIC UI
+           ==================================================================================================== */
+        @font-face {
+            font-family: 'Pusab';
+            src: local('Arial Black'), local('Impact');
+        }
+
         :root {
-            --color-bg-base: #020205;
-            --color-neon-primary: #00e5ff;
-            --color-neon-secondary: #ff0055;
-            --color-neon-tertiary: #a200ff;
-            --color-glass-bg: rgba(10, 15, 30, 0.4);
-            --color-glass-border: rgba(0, 229, 255, 0.3);
-            --color-text-main: #ffffff;
-            --color-text-muted: #8892b0;
-            
-            --font-main: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            --font-display: 'Impact', 'Arial Black', sans-serif;
-            
-            --shadow-neon: 0 0 10px var(--color-neon-primary), 0 0 20px var(--color-neon-primary);
-            --shadow-neon-danger: 0 0 15px var(--color-neon-secondary), 0 0 30px var(--color-neon-secondary);
+            --gd-blue: #0055ff;
+            --gd-ground: #002288;
+            --gd-yellow: #ffff00;
+            --gd-green: #00ff00;
+            --text-stroke: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000;
+            --shadow-drop: 4px 4px 0px rgba(0,0,0,0.5);
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
         }
 
         html, body {
             width: 100vw;
             height: 100vh;
             overflow: hidden;
-            background-color: var(--color-bg-base);
-            font-family: var(--font-main);
-            color: var(--color-text-main);
-            touch-action: none;
-            user-select: none;
-            -webkit-user-select: none;
+            background-color: #000;
+            font-family: 'Pusab', 'Arial Black', sans-serif;
+            color: #fff;
         }
 
-        /* -----------------------------------------------------------------------------------------
-           CANVAS LAYERS
-           ----------------------------------------------------------------------------------------- */
-        
-        #game-container {
+        #game-wrapper {
             position: relative;
             width: 100%;
             height: 100%;
-            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
         }
 
-        #bg-canvas {
+        /* ----------------------------------------------------------------------------------------------------
+           CANVAS LAYERS
+           ---------------------------------------------------------------------------------------------------- */
+        #game-canvas {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             z-index: 1;
+            image-rendering: pixelated;
         }
 
-        #main-canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 2;
-        }
-
-        #fx-canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 3;
-            pointer-events: none;
-            mix-blend-mode: screen;
-        }
-
-        /* -----------------------------------------------------------------------------------------
+        /* ----------------------------------------------------------------------------------------------------
            USER INTERFACE
-           ----------------------------------------------------------------------------------------- */
-
+           ---------------------------------------------------------------------------------------------------- */
         #ui-layer {
             position: absolute;
             top: 0;
@@ -97,227 +74,256 @@
             height: 100%;
             z-index: 10;
             pointer-events: none;
-            display: flex;
-            flex-direction: column;
+            overflow: hidden;
         }
 
-        /* HUD */
-        .hud {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            padding: 20px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
-
-        .hud.active {
-            opacity: 1;
-        }
-
-        .hud__progress-container {
-            width: 400px;
-            max-width: 50vw;
-            background: rgba(0, 0, 0, 0.6);
-            border: 2px solid var(--color-glass-border);
-            border-radius: 20px;
-            padding: 4px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            backdrop-filter: blur(5px);
-        }
-
-        .hud__progress-bar {
-            height: 12px;
-            width: 0%;
-            background: linear-gradient(90deg, var(--color-neon-primary), var(--color-neon-tertiary));
-            border-radius: 10px;
-            box-shadow: var(--shadow-neon);
-            transition: width 0.1s linear;
-        }
-
-        .hud__stats {
-            text-align: right;
-            font-family: var(--font-display);
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-        }
-
-        .hud__attempts {
-            font-size: 1.5rem;
-            color: var(--color-text-muted);
-        }
-
-        .hud__percentage {
-            font-size: 2.5rem;
-            color: var(--color-text-main);
-        }
-
-        /* MENUS */
-        .menu-overlay {
+        .screen {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: radial-gradient(circle at center, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.9) 100%);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            pointer-events: auto;
             opacity: 0;
-            pointer-events: none;
+            visibility: hidden;
             transition: opacity 0.3s ease;
         }
 
-        .menu-overlay.active {
+        .screen.active {
             opacity: 1;
-            pointer-events: auto;
+            visibility: visible;
         }
 
-        .menu-box {
-            background: var(--color-glass-bg);
-            border: 1px solid var(--color-glass-border);
-            border-radius: 16px;
-            padding: 60px 80px;
-            text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 0 30px rgba(0, 229, 255, 0.05);
-            transform: scale(0.9);
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .menu-overlay.active .menu-box {
-            transform: scale(1);
-        }
-
-        .menu-title {
-            font-family: var(--font-display);
-            font-size: 5rem;
-            margin-bottom: 10px;
+        /* MENU SPECIFICS */
+        .title-text {
+            font-size: 6vw;
             text-transform: uppercase;
-            letter-spacing: 5px;
-            background: linear-gradient(to bottom, #ffffff, #888888);
+            letter-spacing: 4px;
+            color: #fff;
+            text-shadow: var(--text-stroke), var(--shadow-drop);
+            margin-bottom: 40px;
+            text-align: center;
+            background: linear-gradient(180deg, #ffffff 0%, #dddddd 50%, #aaaaaa 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 0 15px var(--color-neon-primary));
+            filter: drop-shadow(0 5px 5px rgba(0,0,0,0.8));
         }
 
-        .menu-subtitle {
-            font-size: 1.2rem;
-            color: var(--color-text-muted);
-            margin-bottom: 40px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        /* BUTTONS */
-        .btn {
-            background: transparent;
-            color: var(--color-text-main);
-            border: 2px solid var(--color-glass-border);
-            padding: 15px 40px;
-            font-size: 1.5rem;
-            font-family: var(--font-display);
-            border-radius: 8px;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 2px;
+        /* LEVEL SELECT CAROUSEL */
+        .level-select-container {
+            width: 80%;
+            max-width: 800px;
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             position: relative;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 5rem;
+            cursor: pointer;
+            text-shadow: var(--text-stroke);
+            transition: transform 0.1s;
+        }
+
+        .nav-btn:active { transform: scale(0.8); }
+        .nav-btn:hover { color: var(--gd-yellow); }
+
+        .level-card {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.4);
+            border: 4px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 0 20px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 10px 20px rgba(0,0,0,0.5);
+        }
+
+        .level-name {
+            font-size: 3rem;
+            color: #fff;
+            text-shadow: var(--text-stroke);
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .level-difficulty {
+            font-size: 1.5rem;
+            color: var(--gd-yellow);
+            text-shadow: var(--text-stroke);
+            margin-bottom: 30px;
+        }
+
+        .btn-play {
+            background: var(--gd-green);
+            color: #fff;
+            font-family: 'Pusab', 'Arial Black', sans-serif;
+            font-size: 2.5rem;
+            padding: 15px 50px;
+            border: 4px solid #005500;
+            border-radius: 15px;
+            cursor: pointer;
+            text-shadow: var(--text-stroke);
+            box-shadow: inset 0 5px 0px rgba(255,255,255,0.4), inset 0 -5px 0px rgba(0,0,0,0.3), 0 10px 10px rgba(0,0,0,0.5);
+            transition: transform 0.1s, filter 0.1s;
+        }
+
+        .btn-play:active {
+            transform: translateY(5px);
+            box-shadow: inset 0 2px 0px rgba(255,255,255,0.4), inset 0 -2px 0px rgba(0,0,0,0.3), 0 5px 5px rgba(0,0,0,0.5);
+        }
+
+        .btn-play:hover {
+            filter: brightness(1.2);
+        }
+
+        /* HUD */
+        #hud-screen {
+            pointer-events: none;
+            justify-content: flex-start;
+            padding-top: 20px;
+        }
+
+        .progress-wrap {
+            width: 60%;
+            max-width: 500px;
+            height: 18px;
+            background: rgba(0,0,0,0.6);
+            border: 3px solid #fff;
+            border-radius: 10px;
+            position: relative;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
             overflow: hidden;
-            transition: all 0.3s ease;
-            outline: none;
         }
 
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
+        .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s ease;
+            width: 0%;
+            background: var(--gd-green);
+            box-shadow: inset 0 5px 0 rgba(255,255,255,0.5);
+            transition: width 0.1s linear;
         }
 
-        .btn:hover::before {
-            left: 100%;
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1rem;
+            color: #fff;
+            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
         }
 
-        .btn:hover {
-            background: rgba(0, 229, 255, 0.1);
-            border-color: var(--color-neon-primary);
-            box-shadow: 0 0 20px rgba(0, 229, 255, 0.4), inset 0 0 10px rgba(0, 229, 255, 0.2);
-            text-shadow: 0 0 5px var(--color-neon-primary);
+        .attempt-counter {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2rem;
+            color: rgba(255,255,255,0.5);
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+            animation: fadeOut 3s forwards;
         }
 
-        .btn:active {
-            transform: scale(0.95);
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            70% { opacity: 1; }
+            100% { opacity: 0; }
         }
 
-        .btn--danger:hover {
-            border-color: var(--color-neon-secondary);
-            box-shadow: 0 0 20px rgba(255, 0, 85, 0.4), inset 0 0 10px rgba(255, 0, 85, 0.2);
-            text-shadow: 0 0 5px var(--color-neon-secondary);
+        /* PAUSE / DEATH / WIN SCREENS */
+        .overlay-card {
+            background: rgba(0,0,0,0.8);
+            border: 4px solid #fff;
+            border-radius: 20px;
+            padding: 50px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.9);
         }
 
-        /* DEATH SCREEN SPECIFICS */
-        #menu-death .menu-title {
-            background: linear-gradient(to bottom, #ff4444, #aa0000);
-            -webkit-background-clip: text;
-            filter: drop-shadow(0 0 15px var(--color-neon-secondary));
+        .overlay-title {
+            font-size: 4rem;
+            margin-bottom: 30px;
+            text-shadow: var(--text-stroke);
         }
 
-        /* UTILITIES */
-        .hidden {
-            display: none !important;
+        .btn-action {
+            background: #ffaa00;
+            color: #fff;
+            font-family: inherit;
+            font-size: 2rem;
+            padding: 15px 40px;
+            margin: 10px;
+            border: 4px solid #884400;
+            border-radius: 10px;
+            cursor: pointer;
+            text-shadow: var(--text-stroke);
+            box-shadow: inset 0 4px 0 rgba(255,255,255,0.4), inset 0 -4px 0 rgba(0,0,0,0.3);
         }
+        .btn-action:hover { filter: brightness(1.1); }
+        .btn-action:active { transform: scale(0.95); }
 
     </style>
 </head>
 <body>
 
-    <div id="game-container">
-        <canvas id="bg-canvas"></canvas>
-        <canvas id="main-canvas"></canvas>
-        <canvas id="fx-canvas"></canvas>
-        
+    <div id="game-wrapper">
+        <canvas id="game-canvas"></canvas>
+
         <div id="ui-layer">
             
-            <div id="hud" class="hud">
-                <div class="hud__progress-container">
-                    <div id="hud-bar" class="hud__progress-bar"></div>
-                </div>
-                <div class="hud__stats">
-                    <div id="hud-attempts" class="hud__attempts">ATTEMPT 1</div>
-                    <div id="hud-percent" class="hud__percentage">0%</div>
-                </div>
-            </div>
-
-            <div id="menu-main" class="menu-overlay active">
-                <div class="menu-box">
-                    <h1 class="menu-title">SOREN SOAR</h1>
-                    <p class="menu-subtitle">A HIGH-FIDELITY AERONAUTICAL SIMULATION</p>
-                    <button id="btn-start" class="btn">INITIALIZE</button>
+            <div id="screen-menu" class="screen active" style="background: radial-gradient(circle, #0033aa 0%, #001144 100%);">
+                <h1 class="title-text">SOREN SOAR</h1>
+                <div class="level-select-container">
+                    <button class="nav-btn" id="btn-prev">&#9664;</button>
+                    <div class="level-card">
+                        <div id="menu-level-name" class="level-name">STEREO MADNESS</div>
+                        <div id="menu-level-diff" class="level-difficulty">EASY 1</div>
+                        <button id="btn-start" class="btn-play">PLAY</button>
+                    </div>
+                    <button class="nav-btn" id="btn-next">&#9654;</button>
                 </div>
             </div>
 
-            <div id="menu-death" class="menu-overlay">
-                <div class="menu-box">
-                    <h1 class="menu-title">DESTROYED</h1>
-                    <p class="menu-subtitle">HULL INTEGRITY COMPROMISED</p>
-                    <button id="btn-restart" class="btn btn--danger">REDEPLOY</button>
+            <div id="screen-hud" class="screen">
+                <div class="progress-wrap">
+                    <div id="hud-bar" class="progress-fill"></div>
+                    <div id="hud-pct" class="progress-text">0%</div>
+                </div>
+                <div id="hud-attempt" class="attempt-counter">ATTEMPT 1</div>
+            </div>
+
+            <div id="screen-death" class="screen" style="background: rgba(255,0,0,0.2);">
+                </div>
+
+            <div id="screen-win" class="screen" style="background: rgba(0,0,0,0.7);">
+                <div class="overlay-card">
+                    <h2 class="overlay-title" style="color: #00ff00;">LEVEL COMPLETE!</h2>
+                    <div id="win-stats" style="font-size: 1.5rem; margin-bottom: 30px; text-shadow: 2px 2px #000;">
+                        ATTEMPTS: 1<br>JUMPS: 42
+                    </div>
+                    <button id="btn-next-level" class="btn-action">NEXT LEVEL</button>
+                    <button id="btn-menu-win" class="btn-action" style="background: #0088ff; border-color: #004488;">MENU</button>
                 </div>
             </div>
 
-            <div id="menu-win" class="menu-overlay">
-                <div class="menu-box">
-                    <h1 class="menu-title" style="filter: drop-shadow(0 0 15px #00ff88);">LEVEL CLEARED</h1>
-                    <p class="menu-subtitle">NAVIGATION SUCCESSFUL</p>
-                    <button id="btn-next" class="btn">NEXT SECTOR</button>
+            <div id="screen-pause" class="screen" style="background: rgba(0,0,0,0.6);">
+                <div class="overlay-card">
+                    <h2 class="overlay-title" style="color: #fff;">PAUSED</h2>
+                    <button id="btn-resume" class="btn-play" style="margin-bottom: 20px;">RESUME</button><br>
+                    <button id="btn-menu-pause" class="btn-action" style="background: #ff0055; border-color: #880022;">QUIT</button>
                 </div>
             </div>
 
@@ -326,1049 +332,767 @@
 
 <script>
 /**
- * =========================================================================================
- * SOREN SOAR - ADVANCED CORE ENGINE
- * =========================================================================================
- * Architecture:
- * 1. Math/Geometry Data Structures (Vectors, Matrices, AABBs)
- * 2. Physics Engine (Rigid Body Dynamics, Swept AABB Collision)
- * 3. Render Pipeline (Parallax Background, Entity Pass, Post-Process FX)
- * 4. Particle System (Object Pooled, Velocity-aligned)
- * 5. Level Management (Grid-based parsing, Chunking)
- * 6. Game State Machine
- * =========================================================================================
+ * ====================================================================================================
+ * SOREN SOAR - ADVANCED GEOMETRY REPLICA ENGINE
+ * ARCHITECTURE:
+ * - Constants & Configurations
+ * - Level Matrix Data (Massive Array)
+ * - Math & Collision Library
+ * - Particle Engine
+ * - Entity System (Player, Blocks, Spikes)
+ * - Background & Grid Renderer
+ * - Main Game Loop & State Machine
+ * ====================================================================================================
  */
 
 "use strict";
 
-/* =========================================================================================
-   1. CORE CONFIGURATION & CONSTANTS
-   ========================================================================================= */
-
-const CONFIG = {
-    // Canvas & Resolution
-    TARGET_FPS: 60,
-    TIME_STEP: 1 / 60,
-    MAX_FRAME_TIME: 0.25, // Prevent spiral of death on tab unfocus
+/* ====================================================================================================
+   1. CONFIGURATION & CONSTANTS
+   ==================================================================================================== */
+const CFG = {
+    FPS: 60,
+    TIMESTEP: 1/60,
     
-    // Physics & Movement (Geometry Dash Ship Constants)
-    // GD ship physics rely on high gravity, high thrust, and strict terminal velocities
+    // Exact Geometry Dash Ship Physics Constants
     PHYSICS: {
-        GRAVITY: 3200,             // Pixels per second squared (downward pull)
-        THRUST: -5800,             // Upward acceleration when holding
-        TERMINAL_VEL_DOWN: 950,    // Max falling speed
-        TERMINAL_VEL_UP: -850,     // Max rising speed
-        SCROLL_SPEED_X: 620,       // Horizontal speed of the player
-        CEILING_BOUNCE: 0.0,       // Restitution when hitting the roof
-        FLOOR_BOUNCE: 0.0          // Restitution when hitting the floor
+        GRAVITY: 3450,          // Strong downward pull
+        THRUST: -6100,          // Overpowering upward thrust
+        TERM_VEL_FALL: 1050,    // Terminal velocity falling
+        TERM_VEL_RISE: -900,    // Terminal velocity rising
+        SCROLL_SPEED: 630,      // Constant horizontal speed
+        ROOF_Y: 0               // Top of the screen
     },
 
-    // Player Geometry
+    // Player Configuration
     PLAYER: {
-        WIDTH: 44,
-        HEIGHT: 30,
-        HITBOX_SCALE: 0.75,        // Slightly smaller hitbox for forgiving gameplay
-        ROTATION_SPEED: 12,        // Speed at which ship aligns to velocity
-        MAX_ROTATION: Math.PI / 4, // 45 degrees
-        MIN_ROTATION: -Math.PI / 4
+        WIDTH: 42,
+        HEIGHT: 28,
+        HITBOX_PAD: 6,          // Reduces hitbox size for forgiving gameplay
+        ROT_SPEED: 15,          // Pitch interpolation speed
+        MAX_ROT: Math.PI / 3.5  // Max angle (approx 50 degrees)
     },
 
-    // World Definition
+    // World Configuration
     WORLD: {
-        GRID_SIZE: 60,             // 60x60 pixel blocks
-        CEILING_Y: 0,
-        FLOOR_OFFSET: 10,          // Distance from bottom of screen to floor
-        CAMERA_OFFSET_X: 300       // Where the player sits horizontally on screen
+        BLOCK_SIZE: 60,         // Standard grid size
+        GROUND_HEIGHT: 120,     // Height of the ground solid
+        CAMERA_OFFSET_X: 300    // Player X position on screen
     },
 
-    // Visuals & Particles
-    VISUALS: {
-        TRAIL_LENGTH: 15,
-        PARTICLE_POOL_SIZE: 1000,
-        COLORS: {
-            SHIP_MAIN: '#00e5ff',
-            SHIP_OUTLINE: '#ffffff',
-            BLOCK_MAIN: '#111522',
-            BLOCK_OUTLINE: '#00e5ff',
-            SPIKE_MAIN: '#050a14',
-            SPIKE_OUTLINE: '#ff0055',
-            BG_TOP: '#020205',
-            BG_BOTTOM: '#0a1024'
-        }
+    // Visuals
+    COLORS: {
+        PLAYER_MAIN: '#00ffff',
+        PLAYER_SEC: '#ff00ff',
+        OUTLINE: '#ffffff',
+        LINE: '#ffffff',
+        SPIKE_BASE: '#000000',
+        SPIKE_TIP: '#ffffff'
     }
 };
 
-/* =========================================================================================
-   2. MATH & GEOMETRY LIBRARY
-   ========================================================================================= */
+/* ====================================================================================================
+   2. MASSIVE LEVEL DATA REPOSITORY
+   Legend:
+   '.' = Empty
+   'X' = Standard Block
+   'S' = Half Block (Slab)
+   '^' = Spike Up
+   'v' = Spike Down
+   '<' = Spike Left
+   '>' = Spike Right
+   'E' = Level End Wall
+   ==================================================================================================== */
+const LEVEL_DATABASE = [
+    {
+        name: "STEREO MADNESS",
+        difficulty: "EASY",
+        bgColor: "#0055ff",
+        groundColor: "#002288",
+        layout: [
+            "................................................................................................................................................................................................................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "......................................XXXXXX......................................................................................................................................................................................................................................................................",
+            "......................................XXXXXX...........................................XXXXXX...................................XXXXXX..........................................................................................................................................................................",
+            "......................................XXXXXX...........................................XXXXXX...................................XXXXXX..........................................................................................................................................................................",
+            "..............XXXXXX...........................................XXXXXX..................XXXXXX..................XXXXXX...........XXXXXX........................XXXXXX..................XXXXXX..................XXXXXX............................................................................................",
+            "..............XXXXXX...........................................XXXXXX..................XXXXXX..................XXXXXX...........XXXXXX........................XXXXXX..................XXXXXX..................XXXXXX............................................................................................",
+            "..............XXXXXX...........................................XXXXXX..........................................XXXXXX.........................................XXXXXX..................XXXXXX..................XXXXXX............................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXE"
+        ]
+    },
+    {
+        name: "BACK ON TRACK",
+        difficulty: "EASY",
+        bgColor: "#aa00ff",
+        groundColor: "#550088",
+        layout: [
+            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+            "................................................................................................................................................................................................................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "..................................................XXXXXX.........................................................XXXXXX...................................................XXXXXX................................................................................................................................",
+            "..................................................XXXXXX.........................................................XXXXXX...................................................XXXXXX................................................................................................................................",
+            "......................XXXXXX......................XXXXXX......................XXXXXX.............................XXXXXX......................XXXXXX.......................XXXXXX................................................................................................................................",
+            "......................XXXXXX......................XXXXXX......................XXXXXX.............................XXXXXX......................XXXXXX.......................XXXXXX................................................................................................................................",
+            "......................XXXXXX..................................................XXXXXX.........................................................XXXXXX...............................................................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXE"
+        ]
+    },
+    {
+        name: "POLARGEIST",
+        difficulty: "NORMAL",
+        bgColor: "#00ccff",
+        groundColor: "#006688",
+        layout: [
+            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+            "................................................................................................................................................................................................................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "....................XXXXX..................................XXXXX..................................XXXXX..................................XXXXX..................................................................................................................................................................",
+            "....................XXXXX..................................XXXXX..................................XXXXX..................................XXXXX..................................................................................................................................................................",
+            "....................XXXXX..................................XXXXX..................................XXXXX..................................XXXXX..................................................................................................................................................................",
+            "......................................XXXXX...................................XXXXX...................................XXXXX...................................XXXXX.............................................................................................................................................",
+            "......................................XXXXX...................................XXXXX...................................XXXXX...................................XXXXX.............................................................................................................................................",
+            "......................................XXXXX...................................XXXXX...................................XXXXX...................................XXXXX.............................................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "^^^^^^^^^^......................^^^^^^^^^^......................^^^^^^^^^^......................^^^^^^^^^^......................^^^^^^^^^^......................^^^^^^^^^^........................................................................................................................................",
+            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXE"
+        ]
+    },
+    {
+        name: "DRY OUT",
+        difficulty: "NORMAL",
+        bgColor: "#ff5500",
+        groundColor: "#882200",
+        layout: [
+            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+            "vvvvvvvvvvvvvvvvv...........vvvvvvvvvvvvvvvvv...........vvvvvvvvvvvvvvvvv...........vvvvvvvvvvvvvvvvv...........vvvvvvvvvvvvvvvvv...........vvvvvvvvvvvvvvvvv...........vvvvvvvvvvvvvvvvv.......................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "..........XXXXXXX.......................XXXXXXX.......................XXXXXXX.......................XXXXXXX.......................XXXXXXX.......................XXXXXXX.........................................................................................................................................",
+            "..........XXXXXXX.......................XXXXXXX.......................XXXXXXX.......................XXXXXXX.......................XXXXXXX.......................XXXXXXX.........................................................................................................................................",
+            "..........XXXXXXX.......................XXXXXXX.......................XXXXXXX.......................XXXXXXX.......................XXXXXXX.......................XXXXXXX.........................................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "................................................................................................................................................................................................................................................................................................................",
+            "^^^^^^^^^^^^^^^^^...........^^^^^^^^^^^^^^^^^...........^^^^^^^^^^^^^^^^^...........^^^^^^^^^^^^^^^^^...........^^^^^^^^^^^^^^^^^...........^^^^^^^^^^^^^^^^^...........^^^^^^^^^^^^^^^^^.......................................................................................................................",
+            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXE"
+        ]
+    },
+    {
+        name: "BASE AFTER BASE",
+        difficulty: "HARD",
+        bgColor: "#222222",
+        groundColor: "#111111",
+        layout: [
+            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+            "XXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXXvvvvvXX",
+            "XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX",
+            "XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX",
+            "XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX",
+            "XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX",
+            "XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX",
+            "XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX",
+            "XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX",
+            "XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX",
+            "XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX.....XX",
+            "XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX^^^^^XX",
+            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXE"
+        ]
+    }
+];
 
-class Vector2 {
-    constructor(x = 0, y = 0) {
-        this.x = x;
-        this.y = y;
+/* ====================================================================================================
+   3. MATH & GEOMETRY UTILS
+   ==================================================================================================== */
+class MathUtils {
+    static lerp(start, end, amt) {
+        return (1 - amt) * start + amt * end;
     }
-    
-    set(x, y) {
-        this.x = x;
-        this.y = y;
-        return this;
+    static clamp(val, min, max) {
+        return Math.min(Math.max(val, min), max);
     }
-
-    copy(v) {
-        this.x = v.x;
-        this.y = v.y;
-        return this;
-    }
-
-    clone() {
-        return new Vector2(this.x, this.y);
-    }
-
-    add(v) {
-        this.x += v.x;
-        this.y += v.y;
-        return this;
-    }
-
-    sub(v) {
-        this.x -= v.x;
-        this.y -= v.y;
-        return this;
-    }
-
-    mult(scalar) {
-        this.x *= scalar;
-        this.y *= scalar;
-        return this;
-    }
-
-    div(scalar) {
-        if (scalar !== 0) {
-            this.x /= scalar;
-            this.y /= scalar;
-        }
-        return this;
-    }
-
-    mag() {
-        return Math.sqrt(this.x * this.x + this.y * this.y);
-    }
-
-    magSq() {
-        return this.x * this.x + this.y * this.y;
-    }
-
-    normalize() {
-        const m = this.mag();
-        if (m > 0) this.div(m);
-        return this;
-    }
-
-    distanceTo(v) {
-        const dx = this.x - v.x;
-        const dy = this.y - v.y;
-        return Math.sqrt(dx * dx + dy * dy);
-    }
-
-    dot(v) {
-        return this.x * v.x + this.y * v.y;
-    }
-    
-    cross(v) {
-        return this.x * v.y - this.y * v.x;
+    static map(n, start1, stop1, start2, stop2) {
+        return ((n - start1) / (stop1 - start1)) * (stop2 - start2) + start2;
     }
 }
 
 class AABB {
     constructor(x, y, w, h) {
-        this.pos = new Vector2(x, y); // Top-left
-        this.size = new Vector2(w, h);
+        this.x = x; this.y = y; this.w = w; this.h = h;
     }
-
-    get center() {
-        return new Vector2(this.pos.x + this.size.x / 2, this.pos.y + this.size.y / 2);
-    }
-
-    get extents() {
-        return new Vector2(this.size.x / 2, this.size.y / 2);
-    }
-
     intersects(other) {
-        return (
-            this.pos.x < other.pos.x + other.size.x &&
-            this.pos.x + this.size.x > other.pos.x &&
-            this.pos.y < other.pos.y + other.size.y &&
-            this.pos.y + this.size.y > other.pos.y
-        );
-    }
-
-    minkowskiDifference(other) {
-        return new AABB(
-            this.pos.x - (other.pos.x + other.size.x),
-            this.pos.y - (other.pos.y + other.size.y),
-            this.size.x + other.size.x,
-            this.size.y + other.size.y
-        );
-    }
-
-    closestPointOnBounds(point) {
-        let minDist = Math.abs(point.x - this.pos.x);
-        let boundsPoint = new Vector2(this.pos.x, point.y);
-
-        if (Math.abs(this.pos.x + this.size.x - point.x) < minDist) {
-            minDist = Math.abs(this.pos.x + this.size.x - point.x);
-            boundsPoint.set(this.pos.x + this.size.x, point.y);
-        }
-        if (Math.abs(this.pos.y - point.y) < minDist) {
-            minDist = Math.abs(this.pos.y - point.y);
-            boundsPoint.set(point.x, this.pos.y);
-        }
-        if (Math.abs(this.pos.y + this.size.y - point.y) < minDist) {
-            minDist = Math.abs(this.pos.y + this.size.y - point.y);
-            boundsPoint.set(point.x, this.pos.y + this.size.y);
-        }
-        return boundsPoint;
+        return (this.x < other.x + other.w && this.x + this.w > other.x &&
+                this.y < other.y + other.h && this.y + this.h > other.y);
     }
 }
 
-/* =========================================================================================
-   3. DATA STRUCTURES & POOLS
-   ========================================================================================= */
-
-class ObjectPool {
-    constructor(createFn, initialSize) {
-        this.pool = [];
-        this.createFn = createFn;
-        for (let i = 0; i < initialSize; i++) {
-            this.pool.push(this.createFn());
-        }
-    }
-
-    get() {
-        if (this.pool.length > 0) {
-            return this.pool.pop();
-        }
-        return this.createFn();
-    }
-
-    release(obj) {
-        this.pool.push(obj);
-    }
-}
-
-/* =========================================================================================
-   4. PARTICLE SYSTEM ENGINE
-   ========================================================================================= */
-
+/* ====================================================================================================
+   4. PARTICLE ENGINE
+   ==================================================================================================== */
 class Particle {
     constructor() {
-        this.pos = new Vector2();
-        this.vel = new Vector2();
-        this.acc = new Vector2();
-        this.life = 0;
-        this.maxLife = 1;
-        this.size = 0;
-        this.startSize = 0;
-        this.color = '#ffffff';
-        this.alpha = 1;
         this.active = false;
-        this.type = 0; // 0: square, 1: triangle, 2: circle
-        this.rotation = 0;
-        this.rotSpeed = 0;
+        this.x = 0; this.y = 0;
+        this.vx = 0; this.vy = 0;
+        this.life = 0; this.maxLife = 1;
+        this.size = 0; this.startSize = 0;
+        this.color = '#fff';
+        this.type = 0; // 0: square, 1: trail circle
     }
-
-    init(x, y, vx, vy, ax, ay, life, size, color, type = 0) {
-        this.pos.set(x, y);
-        this.vel.set(vx, vy);
-        this.acc.set(ax, ay);
-        this.life = life;
-        this.maxLife = life;
-        this.size = size;
-        this.startSize = size;
-        this.color = color;
-        this.type = type;
-        this.rotation = Math.random() * Math.PI * 2;
-        this.rotSpeed = (Math.random() - 0.5) * 10;
+    spawn(x, y, vx, vy, life, size, color, type) {
+        this.x = x; this.y = y;
+        this.vx = vx; this.vy = vy;
+        this.life = life; this.maxLife = life;
+        this.size = size; this.startSize = size;
+        this.color = color; this.type = type;
         this.active = true;
-        this.alpha = 1;
     }
-
     update(dt) {
         if (!this.active) return;
-
-        this.vel.add(new Vector2(this.acc.x * dt, this.acc.y * dt));
-        this.pos.add(new Vector2(this.vel.x * dt, this.vel.y * dt));
-        this.rotation += this.rotSpeed * dt;
-
+        this.x += this.vx * dt;
+        this.y += this.vy * dt;
         this.life -= dt;
         if (this.life <= 0) {
             this.active = false;
         } else {
-            const ratio = this.life / this.maxLife;
-            this.alpha = ratio;
-            this.size = this.startSize * ratio;
+            this.size = this.startSize * (this.life / this.maxLife);
         }
     }
-
-    draw(ctx, cameraX) {
+    draw(ctx, camX) {
         if (!this.active) return;
-        
-        const screenX = this.pos.x - cameraX;
-        // Culling
-        if (screenX < -50 || screenX > window.innerWidth + 50) return;
+        let screenX = this.x - camX;
+        if (screenX < -20 || screenX > window.innerWidth + 20) return;
 
-        ctx.globalAlpha = this.alpha;
+        ctx.globalAlpha = this.life / this.maxLife;
         ctx.fillStyle = this.color;
         
-        ctx.translate(screenX, this.pos.y);
-        ctx.rotate(this.rotation);
-
         if (this.type === 0) { // Square
-            ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
-        } else if (this.type === 1) { // Triangle
+            ctx.fillRect(screenX - this.size/2, this.y - this.size/2, this.size, this.size);
+        } else { // Circle
             ctx.beginPath();
-            ctx.moveTo(0, -this.size/2);
-            ctx.lineTo(this.size/2, this.size/2);
-            ctx.lineTo(-this.size/2, this.size/2);
-            ctx.closePath();
-            ctx.fill();
-        } else if (this.type === 2) { // Circle
-            ctx.beginPath();
-            ctx.arc(0, 0, this.size/2, 0, Math.PI * 2);
+            ctx.arc(screenX, this.y, this.size/2, 0, Math.PI*2);
             ctx.fill();
         }
-
-        ctx.rotate(-this.rotation);
-        ctx.translate(-screenX, -this.pos.y);
         ctx.globalAlpha = 1;
     }
 }
 
-class ParticleManager {
-    constructor() {
-        this.pool = new ObjectPool(() => new Particle(), CONFIG.VISUALS.PARTICLE_POOL_SIZE);
-        this.activeParticles = [];
+class ParticleSystem {
+    constructor(maxParticles = 1000) {
+        this.particles = Array.from({length: maxParticles}, () => new Particle());
+        this.idx = 0;
     }
-
-    emit(x, y, params) {
-        const p = this.pool.get();
-        p.init(
-            x, y,
-            params.vx || 0, params.vy || 0,
-            params.ax || 0, params.ay || 0,
-            params.life || 1,
-            params.size || 10,
-            params.color || '#ffffff',
-            params.type || 0
-        );
-        this.activeParticles.push(p);
+    emit(x, y, vx, vy, life, size, color, type) {
+        let p = this.particles[this.idx];
+        p.spawn(x, y, vx, vy, life, size, color, type);
+        this.idx = (this.idx + 1) % this.particles.length;
     }
-
-    emitBurst(x, y, count, params) {
-        for (let i = 0; i < count; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const speed = Math.random() * (params.speedMax || 100) + (params.speedMin || 10);
-            this.emit(x, y, {
-                vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed,
-                life: params.life * (0.5 + Math.random() * 0.5),
-                size: params.size * (0.5 + Math.random() * 0.5),
-                color: params.color,
-                type: params.type
-            });
+    burst(x, y, count, speed, life, size, color) {
+        for(let i=0; i<count; i++) {
+            let angle = Math.random() * Math.PI * 2;
+            let vel = Math.random() * speed;
+            this.emit(x, y, Math.cos(angle)*vel, Math.sin(angle)*vel, life*(0.5+Math.random()*0.5), size, color, 0);
         }
     }
-
     update(dt) {
-        for (let i = this.activeParticles.length - 1; i >= 0; i--) {
-            const p = this.activeParticles[i];
-            p.update(dt);
-            if (!p.active) {
-                this.pool.release(p);
-                this.activeParticles.splice(i, 1);
-            }
-        }
+        for(let p of this.particles) p.update(dt);
     }
-
-    draw(ctx, cameraX) {
-        for (let i = 0; i < this.activeParticles.length; i++) {
-            this.activeParticles[i].draw(ctx, cameraX);
-        }
+    draw(ctx, camX) {
+        for(let p of this.particles) p.draw(ctx, camX);
     }
-
     clear() {
-        for (let i = 0; i < this.activeParticles.length; i++) {
-            this.pool.release(this.activeParticles[i]);
-        }
-        this.activeParticles = [];
+        for(let p of this.particles) p.active = false;
     }
 }
 
-/* =========================================================================================
-   5. GAME ENTITIES & PHYSICS
-   ========================================================================================= */
-
+/* ====================================================================================================
+   5. ENTITIES (Player, Blocks, Spikes)
+   ==================================================================================================== */
 class Player {
     constructor() {
         this.reset();
         this.trail = [];
     }
-
-    reset(startX = 0, startY = window.innerHeight / 2) {
-        this.pos = new Vector2(startX, startY);
-        this.vel = new Vector2(CONFIG.PHYSICS.SCROLL_SPEED_X, 0);
-        this.acc = new Vector2(0, 0);
-        
-        this.width = CONFIG.PLAYER.WIDTH;
-        this.height = CONFIG.PLAYER.HEIGHT;
-        
-        this.rotation = 0;
-        this.isHolding = false;
-        this.isDead = false;
-        this.hasWon = false;
-        
+    
+    reset(y = window.innerHeight/2) {
+        this.x = 0;
+        this.y = y;
+        this.vy = 0;
+        this.rot = 0;
+        this.w = CFG.PLAYER.WIDTH;
+        this.h = CFG.PLAYER.HEIGHT;
+        this.thrusting = false;
+        this.dead = false;
+        this.won = false;
         this.trail = [];
-        this.distanceTraveled = 0;
+        this.jumps = 0;
+        this.distance = 0;
     }
 
     getHitbox() {
-        const hw = (this.width * CONFIG.PLAYER.HITBOX_SCALE) / 2;
-        const hh = (this.height * CONFIG.PLAYER.HITBOX_SCALE) / 2;
-        return new AABB(this.pos.x - hw, this.pos.y - hh, hw * 2, hh * 2);
+        let pad = CFG.PLAYER.HITBOX_PAD;
+        return new AABB(this.x - this.w/2 + pad, this.y - this.h/2 + pad, this.w - pad*2, this.h - pad*2);
     }
 
-    update(dt, floorY) {
-        if (this.isDead || this.hasWon) return;
+    update(dt, groundY) {
+        if (this.dead || this.won) return;
 
-        // Apply Input Forces (Geometry Dash Ship logic)
-        if (this.isHolding) {
-            this.acc.y = CONFIG.PHYSICS.THRUST;
+        // Apply Forces
+        if (this.thrusting) {
+            this.vy += CFG.PHYSICS.THRUST * dt;
         } else {
-            this.acc.y = CONFIG.PHYSICS.GRAVITY;
+            this.vy += CFG.PHYSICS.GRAVITY * dt;
         }
 
-        // Euler Integration
-        this.vel.y += this.acc.y * dt;
+        // Terminal Velocity
+        this.vy = MathUtils.clamp(this.vy, CFG.PHYSICS.TERM_VEL_RISE, CFG.PHYSICS.TERM_VEL_FALL);
 
-        // Terminal Velocity Clamping
-        if (this.vel.y > CONFIG.PHYSICS.TERMINAL_VEL_DOWN) {
-            this.vel.y = CONFIG.PHYSICS.TERMINAL_VEL_DOWN;
-        } else if (this.vel.y < CONFIG.PHYSICS.TERMINAL_VEL_UP) {
-            this.vel.y = CONFIG.PHYSICS.TERMINAL_VEL_UP;
+        // Move
+        this.x += CFG.PHYSICS.SCROLL_SPEED * dt;
+        this.y += this.vy * dt;
+        this.distance = this.x;
+
+        // Rotation (Pitch)
+        let velRatio = this.vy / CFG.PHYSICS.TERM_VEL_FALL;
+        let targetRot = velRatio * CFG.PLAYER.MAX_ROT;
+        this.rot += (targetRot - this.rot) * CFG.PLAYER.ROT_SPEED * dt;
+
+        // Constraints
+        let halfH = this.h / 2;
+        if (this.y - halfH < CFG.PHYSICS.ROOF_Y) {
+            this.y = CFG.PHYSICS.ROOF_Y + halfH;
+            this.vy = 0;
+            this.rot = 0;
+        }
+        if (this.y + halfH > groundY) {
+            this.y = groundY - halfH;
+            this.vy = 0;
+            this.rot = 0;
         }
 
-        // Position Integration
-        this.pos.x += this.vel.x * dt;
-        this.pos.y += this.vel.y * dt;
-        
-        this.distanceTraveled = this.pos.x;
-
-        // Rotation Logic (Pitch based on vertical velocity)
-        // Normalize velocity between max up and max down to get a ratio from -1 to 1
-        let velRatio = this.vel.y / CONFIG.PHYSICS.TERMINAL_VEL_DOWN;
-        
-        // Target rotation based on velocity ratio
-        let targetRot = velRatio * CONFIG.PLAYER.MAX_ROTATION;
-        
-        // Interpolate rotation
-        this.rotation += (targetRot - this.rotation) * CONFIG.PLAYER.ROTATION_SPEED * dt;
-
-        // Floor / Ceiling constraints (Ship glides on floor/ceiling)
-        const hh = this.height / 2;
-        
-        // Ceiling
-        if (this.pos.y - hh < CONFIG.WORLD.CEILING_Y) {
-            this.pos.y = CONFIG.WORLD.CEILING_Y + hh;
-            this.vel.y = 0;
-            this.rotation = 0; // Flatten out
-        }
-        
-        // Floor
-        if (this.pos.y + hh > floorY) {
-            this.pos.y = floorY - hh;
-            this.vel.y = 0;
-            this.rotation = 0; // Flatten out
-        }
-
-        // Update Trail
-        this.trail.unshift({ x: this.pos.x, y: this.pos.y });
-        if (this.trail.length > CONFIG.VISUALS.TRAIL_LENGTH) {
-            this.trail.pop();
-        }
+        // Trail recording
+        this.trail.unshift({x: this.x, y: this.y});
+        if (this.trail.length > 20) this.trail.pop();
     }
 
-    draw(ctx, cameraX) {
-        if (this.isDead) return;
+    draw(ctx, camX) {
+        if (this.dead) return;
+        let screenX = this.x - camX;
 
-        const screenX = this.pos.x - cameraX;
-
-        // Draw Trail
+        // Draw Trail (Ghost effect)
         if (this.trail.length > 1) {
             ctx.beginPath();
-            ctx.moveTo(this.trail[0].x - cameraX, this.trail[0].y);
+            ctx.moveTo(this.trail[0].x - camX, this.trail[0].y);
             for (let i = 1; i < this.trail.length; i++) {
-                ctx.lineTo(this.trail[i].x - cameraX, this.trail[i].y);
+                ctx.lineTo(this.trail[i].x - camX, this.trail[i].y);
             }
-            ctx.strokeStyle = `rgba(0, 229, 255, 0.4)`;
-            ctx.lineWidth = 12;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.lineWidth = this.h * 0.6;
             ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.stroke();
-            
-            // Inner trail
-            ctx.beginPath();
-            ctx.moveTo(this.trail[0].x - cameraX, this.trail[0].y);
-            for (let i = 1; i < this.trail.length; i++) {
-                ctx.lineTo(this.trail[i].x - cameraX, this.trail[i].y);
-            }
-            ctx.strokeStyle = `rgba(255, 255, 255, 0.8)`;
-            ctx.lineWidth = 4;
             ctx.stroke();
         }
 
-        // Draw Ship
         ctx.save();
-        ctx.translate(screenX, this.pos.y);
-        ctx.rotate(this.rotation);
+        ctx.translate(screenX, this.y);
+        ctx.rotate(this.rot);
 
-        // Ship shadow/glow
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = CONFIG.VISUALS.COLORS.SHIP_MAIN;
+        // --- GD Ship Drawing ---
+        // Black Outline
+        ctx.fillStyle = '#000';
+        ctx.fillRect(-this.w/2 - 2, -this.h/2 - 2, this.w + 4, this.h + 4);
 
-        // Main Hull (Geometry Dash stylized rocket)
-        ctx.fillStyle = CONFIG.VISUALS.COLORS.SHIP_MAIN;
-        ctx.strokeStyle = CONFIG.VISUALS.COLORS.SHIP_OUTLINE;
-        ctx.lineWidth = 3;
+        // White Inner Outline
+        ctx.fillStyle = CFG.COLORS.OUTLINE;
+        ctx.fillRect(-this.w/2, -this.h/2, this.w, this.h);
 
-        ctx.beginPath();
-        // Nose
-        ctx.moveTo(this.width / 2, 0);
-        // Top curve
-        ctx.lineTo(this.width / 4, -this.height / 2);
-        ctx.lineTo(-this.width / 2, -this.height / 2);
-        // Engine back
-        ctx.lineTo(-this.width / 2 + 5, 0);
-        // Bottom curve
-        ctx.lineTo(-this.width / 2, this.height / 2);
-        ctx.lineTo(this.width / 4, this.height / 2);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
+        // Main Color Hull
+        ctx.fillStyle = CFG.COLORS.PLAYER_MAIN;
+        ctx.fillRect(-this.w/2 + 2, -this.h/2 + 2, this.w - 4, this.h - 4);
+
+        // Secondary Color Details (Stripes)
+        ctx.fillStyle = CFG.COLORS.PLAYER_SEC;
+        ctx.fillRect(-this.w/4, -this.h/2 + 2, this.w/2, this.h - 4);
 
         // Cockpit Window
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.moveTo(this.width / 4, -this.height / 4);
-        ctx.lineTo(0, -this.height / 4);
-        ctx.lineTo(-5, 0);
-        ctx.lineTo(10, 0);
-        ctx.closePath();
-        ctx.fill();
+        ctx.fillStyle = '#00ffff'; // Glass color
+        ctx.fillRect(this.w/4 - 4, -this.h/4, 8, this.h/2);
 
-        // Engine Thruster Nozzle
-        ctx.fillStyle = '#333';
-        ctx.fillRect(-this.width / 2 - 8, -6, 8, 12);
+        // Engine Port
+        ctx.fillStyle = '#222';
+        ctx.fillRect(-this.w/2 - 6, -this.h/4, 8, this.h/2);
 
         ctx.restore();
     }
 }
 
-class Obstacle {
+class Entity {
     constructor(type, x, y, size) {
-        this.type = type; // 1: solid block, 2: spike up, 3: spike down, 4: spike right, 5: spike left, 9: end portal
-        this.pos = new Vector2(x, y);
-        this.size = size;
-        this.aabb = new AABB(x, y, size, size);
+        this.type = type; 
+        this.x = x; this.y = y; this.size = size;
         
-        // Fine-tune hitboxes for specific shapes
-        if (this.type >= 2 && this.type <= 5) {
-            // Spikes have smaller hitboxes
-            const pad = size * 0.3;
+        // Define specific hitboxes based on type
+        if (type === 'X' || type === 'S' || type === 'E') {
+            let h = (type === 'S') ? size/2 : size;
+            let yOffset = (type === 'S') ? size/2 : 0;
+            this.aabb = new AABB(x, y + yOffset, size, h);
+            if(type === 'E') this.aabb = new AABB(x, 0, size, window.innerHeight);
+        } else {
+            // Spikes - smaller hitbox
+            let pad = size * 0.25;
             this.aabb = new AABB(x + pad, y + pad, size - pad*2, size - pad*2);
         }
     }
 
-    draw(ctx, cameraX) {
-        const screenX = this.pos.x - cameraX;
-        if (screenX < -this.size || screenX > window.innerWidth) return; // Culling
+    draw(ctx, camX) {
+        let screenX = this.x - camX;
+        if (screenX < -this.size || screenX > window.innerWidth) return;
 
         ctx.save();
-        ctx.translate(screenX, this.pos.y);
+        ctx.translate(screenX, this.y);
 
-        if (this.type === 1) {
-            // Solid Block
-            ctx.fillStyle = CONFIG.VISUALS.COLORS.BLOCK_MAIN;
-            ctx.strokeStyle = CONFIG.VISUALS.COLORS.BLOCK_OUTLINE;
-            ctx.lineWidth = 2;
-            
-            // Neon Glow inside
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = CONFIG.VISUALS.COLORS.BLOCK_OUTLINE;
-            
+        if (this.type === 'X') {
+            // Standard Block
+            ctx.fillStyle = '#000'; // Black border
             ctx.fillRect(0, 0, this.size, this.size);
-            ctx.strokeRect(0, 0, this.size, this.size);
             
-            // Inner detail
-            ctx.shadowBlur = 0;
-            ctx.fillStyle = 'rgba(0, 229, 255, 0.1)';
-            ctx.fillRect(5, 5, this.size - 10, this.size - 10);
+            ctx.fillStyle = '#fff'; // White inner border
+            ctx.fillRect(2, 2, this.size-4, this.size-4);
             
-        } else if (this.type >= 2 && this.type <= 5) {
-            // Spike
-            ctx.fillStyle = CONFIG.VISUALS.COLORS.SPIKE_MAIN;
-            ctx.strokeStyle = CONFIG.VISUALS.COLORS.SPIKE_OUTLINE;
-            ctx.lineWidth = 2;
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = CONFIG.VISUALS.COLORS.SPIKE_OUTLINE;
+            ctx.fillStyle = CFG.COLORS.PLAYER_SEC; // Block core color
+            ctx.fillRect(4, 4, this.size-8, this.size-8);
 
+            // Corner dots
+            ctx.fillStyle = '#000';
+            ctx.fillRect(6, 6, 4, 4);
+            ctx.fillRect(this.size-10, 6, 4, 4);
+            ctx.fillRect(6, this.size-10, 4, 4);
+            ctx.fillRect(this.size-10, this.size-10, 4, 4);
+
+        } else if (this.type === 'S') {
+            // Slab (Half block)
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, this.size/2, this.size, this.size/2);
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(2, this.size/2 + 2, this.size-4, this.size/2 - 4);
+            ctx.fillStyle = CFG.COLORS.PLAYER_SEC;
+            ctx.fillRect(4, this.size/2 + 4, this.size-8, this.size/2 - 8);
+
+        } else if (['^', 'v', '<', '>'].includes(this.type)) {
+            // Spike Drawing
+            ctx.fillStyle = CFG.COLORS.SPIKE_TIP;
             ctx.beginPath();
             
-            // Depending on rotation
-            if (this.type === 2) { // Up
-                ctx.moveTo(this.size / 2, 0);
-                ctx.lineTo(this.size, this.size);
-                ctx.lineTo(0, this.size);
-            } else if (this.type === 3) { // Down
-                ctx.moveTo(this.size / 2, this.size);
-                ctx.lineTo(this.size, 0);
-                ctx.lineTo(0, 0);
-            } else if (this.type === 4) { // Right
-                ctx.moveTo(this.size, this.size / 2);
-                ctx.lineTo(0, 0);
-                ctx.lineTo(0, this.size);
-            } else if (this.type === 5) { // Left
-                ctx.moveTo(0, this.size / 2);
-                ctx.lineTo(this.size, 0);
-                ctx.lineTo(this.size, this.size);
+            if (this.type === '^') {
+                ctx.moveTo(this.size/2, 0); ctx.lineTo(this.size, this.size); ctx.lineTo(0, this.size);
+            } else if (this.type === 'v') {
+                ctx.moveTo(this.size/2, this.size); ctx.lineTo(this.size, 0); ctx.lineTo(0, 0);
+            } else if (this.type === '>') {
+                ctx.moveTo(this.size, this.size/2); ctx.lineTo(0, 0); ctx.lineTo(0, this.size);
+            } else if (this.type === '<') {
+                ctx.moveTo(0, this.size/2); ctx.lineTo(this.size, 0); ctx.lineTo(this.size, this.size);
             }
-            
-            ctx.closePath();
             ctx.fill();
+
+            // Inner dark spike
+            ctx.fillStyle = CFG.COLORS.SPIKE_BASE;
+            ctx.beginPath();
+            let p = 6; // padding
+            if (this.type === '^') {
+                ctx.moveTo(this.size/2, p*2); ctx.lineTo(this.size-p, this.size-p); ctx.lineTo(p, this.size-p);
+            } else if (this.type === 'v') {
+                ctx.moveTo(this.size/2, this.size-p*2); ctx.lineTo(this.size-p, p); ctx.lineTo(p, p);
+            } else if (this.type === '>') {
+                ctx.moveTo(this.size-p*2, this.size/2); ctx.lineTo(p, p); ctx.lineTo(p, this.size-p);
+            } else if (this.type === '<') {
+                ctx.moveTo(p*2, this.size/2); ctx.lineTo(this.size-p, p); ctx.lineTo(this.size-p, this.size-p);
+            }
+            ctx.fill();
+        } else if (this.type === 'E') {
+            // End Wall
+            ctx.fillStyle = 'rgba(0, 255, 0, 0.3)';
+            ctx.fillRect(0, -window.innerHeight, this.size, window.innerHeight*2);
+            ctx.strokeStyle = '#00ff00';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(this.size/2, -window.innerHeight);
+            ctx.lineTo(this.size/2, window.innerHeight);
             ctx.stroke();
-            
-        } else if (this.type === 9) {
-            // End Portal / Wall
-            ctx.fillStyle = 'rgba(0, 255, 136, 0.4)';
-            ctx.fillRect(0, 0, this.size, this.size * 50); // Massive wall
         }
 
         ctx.restore();
     }
 }
 
-/* =========================================================================================
-   6. LEVEL DATA & PARSING
-   ========================================================================================= */
-
-// Massive level maps. 
-// Character mapping:
-// '.' = empty
-// 'X' = solid block
-// '^' = spike up
-// 'v' = spike down
-// '>' = spike right
-// '<' = spike left
-// 'E' = End
-
-const LEVELS = [
-    // -------------------------------------------------------------------------------------
-    // LEVEL 1: INITIATION
-    // -------------------------------------------------------------------------------------
-    [
-        "........................................................................................................................................................................................................",
-        "........................................................................................................................................................................................................",
-        "........................................................................................................................................................................................................",
-        "........XXXXXXX.........................................................................................................................................................................................",
-        "........XXXXXXX...................................XXXXXXX.....................XXXXXXX...................................................................................................................",
-        "........XXXXXXX...................................XXXXXXX.....................XXXXXXX...................................................................................................................",
-        ".................................XXXXXXX..........XXXXXXX.....................XXXXXXX................................XXXXX....................XXXXX...................................................",
-        ".................................XXXXXXX.............................................................................XXXXX....................XXXXX...................................................",
-        ".................................XXXXXXX.......................................................XXXXXXX...............XXXXX....................XXXXX....................XXXXX..........................",
-        "...............................................................................................XXXXXXX.................................................................XXXXX..........................",
-        "...............................................................................................XXXXXXX.................................................................XXXXX..........................",
-        "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXE"
-    ],
-    // -------------------------------------------------------------------------------------
-    // LEVEL 2: NARROW CORRIDORS
-    // -------------------------------------------------------------------------------------
-    [
-        "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-        "...................................................XXXXXXXXX........................................................XXXXXXXXXX........................................................................",
-        "...................................................XXXXXXXXX........................................................XXXXXXXXXX........................................................................",
-        ".........XXXXXXXXX.................................XXXXXXXXX........................................................XXXXXXXXXX.......................XXXXXXXXX........................................",
-        ".........XXXXXXXXX............XXXXX.......................................XXXXXXXXXX...............................................................XXXXXXXXX........................................",
-        ".........XXXXXXXXX............XXXXX.......................................XXXXXXXXXX...............XXXXX...........................................XXXXXXXXX........................................",
-        "..............................XXXXX.......................................XXXXXXXXXX...............XXXXX............................................................................................",
-        "...................................................................................................XXXXX............................................................XXXXXXXXX.......................",
-        "....................................................................................................................................................................XXXXXXXXX.......................",
-        "....................................................................................................................................................................XXXXXXXXX.......................",
-        "....................................................................................................................................................................................................",
-        "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXE"
-    ],
-    // -------------------------------------------------------------------------------------
-    // LEVEL 3: SPIKE TRAPS
-    // -------------------------------------------------------------------------------------
-    [
-        "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-        "vvvvvvvvvvvv................................vvvvvvvvvvvv.......................vvvvvvvvvvvv.......................vvvvvvvvvvvv.......................vvvvvvvvvvvv.......................vvvvvvvvvvvv",
-        "........................................................................................................................................................................................................",
-        ".................XXXXXXXXX.......................................XXXXXXXXX.........................XXXXXXXXX.........................XXXXXXXXX.........................XXXXXXXXX......................",
-        ".................XXXXXXXXX.......................................XXXXXXXXX.........................XXXXXXXXX.........................XXXXXXXXX.........................XXXXXXXXX......................",
-        ".................XXXXXXXXX.......................................XXXXXXXXX.........................XXXXXXXXX.........................XXXXXXXXX.........................XXXXXXXXX......................",
-        "........................................................................................................................................................................................................",
-        "........................................................................................................................................................................................................",
-        "........................................................................................................................................................................................................",
-        "^^^^^^^^^^^^................................^^^^^^^^^^^^.......................^^^^^^^^^^^^.......................^^^^^^^^^^^^.......................^^^^^^^^^^^^.......................^^^^^^^^^^^^",
-        "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXE"
-    ],
-    // -------------------------------------------------------------------------------------
-    // LEVEL 4: THE SAWTOOTH
-    // -------------------------------------------------------------------------------------
-    [
-        "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-        "XXvvvvvvvvvvvvvvvvvvvXXXXvvvvvvvvvvvvvvvvvvvXXXXvvvvvvvvvvvvvvvvvvvXXXXvvvvvvvvvvvvvvvvvvvXXXXvvvvvvvvvvvvvvvvvvvXXXXvvvvvvvvvvvvvvvvvvvXXXXvvvvvvvvvvvvvvvvvvvXXXXvvvvvvvvvvvvvvvvvvvXXXXvvvvvvvvvvXX",
-        "XX...................XXXX...................XXXX...................XXXX...................XXXX...................XXXX...................XXXX...................XXXX...................XXXX..........XX",
-        "XX...................XXXX...................XXXX...................XXXX...................XXXX...................XXXX...................XXXX...................XXXX...................XXXX..........XX",
-        "XXXXX................XXXXX..................XXXXX..................XXXXX..................XXXXX..................XXXXX..................XXXXX..................XXXXX..................XXXXX........XX",
-        "XXXXX................XXXXX..................XXXXX..................XXXXX..................XXXXX..................XXXXX..................XXXXX..................XXXXX..................XXXXX........XX",
-        "XXXXXXX..............XXXXXXX................XXXXXXX................XXXXXXX................XXXXXXX................XXXXXXX................XXXXXXX................XXXXXXX................XXXXXXX......XX",
-        "XXXXXXX..............XXXXXXX................XXXXXXX................XXXXXXX................XXXXXXX................XXXXXXX................XXXXXXX................XXXXXXX................XXXXXXX......XX",
-        "XXXXXXXXX............XXXXXXXXX..............XXXXXXXXX..............XXXXXXXXX..............XXXXXXXXX..............XXXXXXXXX..............XXXXXXXXX..............XXXXXXXXX..............XXXXXXXXX....XX",
-        "XXXXXXXXX............XXXXXXXXX..............XXXXXXXXX..............XXXXXXXXX..............XXXXXXXXX..............XXXXXXXXX..............XXXXXXXXX..............XXXXXXXXX..............XXXXXXXXX....XX",
-        "XX^^^^^^^^^^^^^^^^^^^XXXX^^^^^^^^^^^^^^^^^^^XXXX^^^^^^^^^^^^^^^^^^^XXXX^^^^^^^^^^^^^^^^^^^XXXX^^^^^^^^^^^^^^^^^^^XXXX^^^^^^^^^^^^^^^^^^^XXXX^^^^^^^^^^^^^^^^^^^XXXX^^^^^^^^^^^^^^^^^^^XXXX^^^^^^^^XX",
-        "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXE"
-    ],
-    // -------------------------------------------------------------------------------------
-    // LEVEL 5: THE GAUNTLET
-    // -------------------------------------------------------------------------------------
-    [
-        "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-        "XXXX.................XXXXXXXXXXX.............XXXX...........................XXXXXXXXXXXXXXX....................................................................XXXXXXXXX............................",
-        "XXXX.................XXXXXXXXXXX.............XXXX...........................XXXXXXXXXXXXXXX....................................................................XXXXXXXXX............................",
-        "XXXX.................XXXXXXXXXXX.............XXXX...........................XXXXXXXXXXXXXXX....................................................................XXXXXXXXX............................",
-        "XXXX.................XXXXXXXXXXX.............XXXX...........................XXXXXXXXXXXXXXX...................XXXXXX...........................................XXXXXXXXX............................",
-        "........XXXXXXX......................XXXXX......................XXXXXX.................................XXXXXXXXXXX....................XXXXXX...................XXXXXXXXX............................",
-        "........XXXXXXX......................XXXXX......................XXXXXX.................................XXXXXXXXXXX....................XXXXXX........................................................",
-        "........XXXXXXX......................XXXXX......................XXXXXX.................................XXXXXXXXXXX....................XXXXXX.....................................XXXXXXX............",
-        "........XXXXXXX......................XXXXX......................XXXXXX................................................................XXXXXX.....................................XXXXXXX............",
-        ".................................................................................................................................................................................XXXXXXX............",
-        ".................................................................................................................................................................................XXXXXXX............",
-        "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXE"
-    ]
-];
-
-class LevelManager {
+/* ====================================================================================================
+   6. LEVEL & BACKGROUND MANAGER
+   ==================================================================================================== */
+class WorldManager {
     constructor() {
-        this.obstacles = [];
+        this.entities = [];
         this.levelLength = 0;
-        this.gridSize = CONFIG.WORLD.GRID_SIZE;
-        this.currentLevelIndex = 0;
+        this.groundY = 0;
+        this.bgColor = '#000';
+        this.groundColor = '#000';
+        this.gridSize = CFG.WORLD.BLOCK_SIZE;
     }
 
-    loadLevel(index) {
-        this.obstacles = [];
-        this.currentLevelIndex = index;
-        const layout = LEVELS[index];
-        
-        // Calculate vertical offset to center the level on screen
-        const mapHeight = layout.length * this.gridSize;
-        const offsetY = (window.innerHeight - mapHeight) / 2;
+    load(index) {
+        this.entities = [];
+        let data = LEVEL_DATABASE[index];
+        this.bgColor = data.bgColor;
+        this.groundColor = data.groundColor;
+
+        let mapH = data.layout.length * this.gridSize;
+        this.groundY = window.innerHeight - CFG.WORLD.GROUND_HEIGHT;
+        let startY = this.groundY - mapH; // Bottom align the layout to the ground
 
         let maxX = 0;
-
-        for (let row = 0; row < layout.length; row++) {
-            for (let col = 0; col < layout[row].length; col++) {
-                const char = layout[row][col];
-                const x = col * this.gridSize;
-                const y = offsetY + row * this.gridSize;
+        for (let r = 0; r < data.layout.length; r++) {
+            for (let c = 0; c < data.layout[r].length; c++) {
+                let char = data.layout[r][c];
+                let x = c * this.gridSize;
+                let y = startY + r * this.gridSize;
                 
-                if (x > maxX) maxX = x;
-
-                let type = 0;
-                if (char === 'X') type = 1; // Solid
-                else if (char === '^') type = 2; // Spike Up
-                else if (char === 'v') type = 3; // Spike Down
-                else if (char === '>') type = 4; // Spike Right
-                else if (char === '<') type = 5; // Spike Left
-                else if (char === 'E') type = 9; // End Portal
-
-                if (type !== 0) {
-                    this.obstacles.push(new Obstacle(type, x, y, this.gridSize));
+                if (char !== '.') {
+                    this.entities.push(new Entity(char, x, y, this.gridSize));
+                    if (x > maxX) maxX = x;
                 }
             }
         }
-
         this.levelLength = maxX;
-        return offsetY + mapHeight; // Return calculated floor Y
     }
 
-    draw(ctx, cameraX) {
-        for (let i = 0; i < this.obstacles.length; i++) {
-            this.obstacles[i].draw(ctx, cameraX);
-        }
-    }
-}
-
-/* =========================================================================================
-   7. PARALLAX BACKGROUND SYSTEM
-   ========================================================================================= */
-
-class ParallaxLayer {
-    constructor(imageType, speed, yOffset, scale, color) {
-        this.speed = speed;
-        this.yOffset = yOffset;
-        this.color = color;
-        this.nodes = [];
-        
-        // Generate abstract geometric nodes for the background
-        for (let i = 0; i < 30; i++) {
-            this.nodes.push({
-                x: Math.random() * 3000,
-                y: Math.random() * window.innerHeight,
-                size: (Math.random() * 100 + 50) * scale,
-                rotation: Math.random() * Math.PI,
-                rotSpeed: (Math.random() - 0.5) * 0.5
-            });
-        }
-    }
-
-    update(dt) {
-        for (let node of this.nodes) {
-            node.rotation += node.rotSpeed * dt;
-        }
-    }
-
-    draw(ctx, cameraX) {
-        ctx.fillStyle = this.color;
-        ctx.strokeStyle = this.color;
-        ctx.lineWidth = 2;
-
-        for (let node of this.nodes) {
-            // Calculate parallax position with infinite wrapping
-            let x = (node.x - cameraX * this.speed) % 3000;
-            if (x < -200) x += 3000;
-
-            ctx.save();
-            ctx.translate(x, node.y + this.yOffset);
-            ctx.rotate(node.rotation);
-
-            // Draw abstract wireframe boxes
-            ctx.strokeRect(-node.size/2, -node.size/2, node.size, node.size);
-            
-            ctx.restore();
-        }
-    }
-}
-
-class BackgroundManager {
-    constructor() {
-        this.layers = [
-            new ParallaxLayer('geo', 0.1, 0, 0.5, 'rgba(0, 229, 255, 0.05)'),
-            new ParallaxLayer('geo', 0.3, 50, 1.0, 'rgba(0, 229, 255, 0.1)'),
-            new ParallaxLayer('geo', 0.6, 100, 1.5, 'rgba(0, 229, 255, 0.15)')
-        ];
-    }
-
-    update(dt) {
-        for (let layer of this.layers) {
-            layer.update(dt);
-        }
-    }
-
-    draw(ctx, cameraX) {
-        // Gradient Base
-        const grad = ctx.createLinearGradient(0, 0, 0, window.innerHeight);
-        grad.addColorStop(0, CONFIG.VISUALS.COLORS.BG_TOP);
-        grad.addColorStop(1, CONFIG.VISUALS.COLORS.BG_BOTTOM);
-        ctx.fillStyle = grad;
+    drawBackground(ctx, camX) {
+        // Main BG
+        ctx.fillStyle = this.bgColor;
         ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
 
-        // Parallax Layers
-        for (let layer of this.layers) {
-            layer.draw(ctx, cameraX);
+        // Faint Grid (parallax 0.5)
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+        ctx.lineWidth = 2;
+        let gOffsetX = (camX * 0.5) % this.gridSize;
+        for(let x = -gOffsetX; x < window.innerWidth; x += this.gridSize) {
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, this.groundY); ctx.stroke();
         }
+        for(let y = this.groundY % this.gridSize; y > 0; y -= this.gridSize) {
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(window.innerWidth, y); ctx.stroke();
+        }
+
+        // Entities
+        for(let e of this.entities) e.draw(ctx, camX);
+
+        // Ground
+        ctx.fillStyle = this.groundColor;
+        ctx.fillRect(0, this.groundY, window.innerWidth, window.innerHeight - this.groundY);
         
-        // Floor line
-        ctx.fillStyle = 'rgba(0, 229, 255, 0.2)';
-        ctx.fillRect(0, window.innerHeight - CONFIG.WORLD.FLOOR_OFFSET, window.innerWidth, 2);
+        // Ground Line
+        ctx.fillStyle = CFG.COLORS.LINE;
+        ctx.fillRect(0, this.groundY - 4, window.innerWidth, 4);
+
+        // Ground Pattern (Scrolling fast)
+        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        let groundOffsetX = camX % this.gridSize;
+        for(let x = -groundOffsetX; x < window.innerWidth; x += this.gridSize) {
+            ctx.strokeRect(x, this.groundY, this.gridSize, this.gridSize);
+        }
     }
 }
 
-/* =========================================================================================
-   8. CORE GAME ENGINE / STATE MACHINE
-   ========================================================================================= */
-
-class GameEngine {
+/* ====================================================================================================
+   7. MAIN ENGINE & UI
+   ==================================================================================================== */
+class Engine {
     constructor() {
-        // Canvas Setup
-        this.bgCanvas = document.getElementById('bg-canvas');
-        this.mainCanvas = document.getElementById('main-canvas');
-        this.fxCanvas = document.getElementById('fx-canvas');
+        this.canvas = document.getElementById('game-canvas');
+        this.ctx = this.canvas.getContext('2d', { alpha: false });
         
-        this.bgCtx = this.bgCanvas.getContext('2d', { alpha: false });
-        this.mainCtx = this.mainCanvas.getContext('2d', { alpha: true });
-        this.fxCtx = this.fxCanvas.getContext('2d', { alpha: true });
-        
-        // System Modules
+        this.world = new WorldManager();
         this.player = new Player();
-        this.levelManager = new LevelManager();
-        this.bgManager = new BackgroundManager();
-        this.particles = new ParticleManager();
+        this.particles = new ParticleSystem(1500);
         
-        // State Variables
-        this.state = 'MENU'; // MENU, PLAYING, DEAD, WON
-        this.cameraX = 0;
-        this.floorY = window.innerHeight - CONFIG.WORLD.FLOOR_OFFSET;
+        this.state = 'MENU'; // MENU, PLAYING, PAUSED, DEAD, WON
+        this.camX = 0;
         this.attempts = 1;
-        this.currentLevel = 0;
+        this.currentLevelIdx = 0;
         
-        // Time tracking
-        this.lastTime = 0;
+        this.lastTime = performance.now();
         this.accumulator = 0;
 
-        // Bindings
-        this.resize = this.resize.bind(this);
-        this.loop = this.loop.bind(this);
-        this.handleInputDown = this.handleInputDown.bind(this);
-        this.handleInputUp = this.handleInputUp.bind(this);
+        this.initDOM();
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+        this.setupInputs();
 
-        this.init();
+        this.updateMenuUI();
+        requestAnimationFrame((t) => this.loop(t));
     }
 
-    init() {
-        window.addEventListener('resize', this.resize);
-        this.resize();
+    initDOM() {
+        this.ui = {
+            menu: document.getElementById('screen-menu'),
+            hud: document.getElementById('screen-hud'),
+            death: document.getElementById('screen-death'),
+            win: document.getElementById('screen-win'),
+            pause: document.getElementById('screen-pause'),
+            bar: document.getElementById('hud-bar'),
+            pct: document.getElementById('hud-pct'),
+            attempt: document.getElementById('hud-attempt'),
+            lvlName: document.getElementById('menu-level-name'),
+            lvlDiff: document.getElementById('menu-level-diff'),
+            winStats: document.getElementById('win-stats')
+        };
 
-        // Input Listeners
-        window.addEventListener('mousedown', this.handleInputDown);
-        window.addEventListener('touchstart', this.handleInputDown, { passive: false });
-        window.addEventListener('keydown', (e) => {
-            if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
-                this.handleInputDown(e);
-            }
-        });
-
-        window.addEventListener('mouseup', this.handleInputUp);
-        window.addEventListener('touchend', this.handleInputUp);
-        window.addEventListener('keyup', (e) => {
-            if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
-                this.handleInputUp(e);
-            }
-        });
-
-        // UI Listeners
-        document.getElementById('btn-start').addEventListener('click', () => this.startLevel(0));
-        document.getElementById('btn-restart').addEventListener('click', () => this.startLevel(this.currentLevel));
-        document.getElementById('btn-next').addEventListener('click', () => {
-            this.currentLevel = (this.currentLevel + 1) % LEVELS.length;
-            this.attempts = 1; // reset attempts for new level
-            this.startLevel(this.currentLevel);
-        });
-
-        // Start Loop
-        requestAnimationFrame(this.loop);
+        document.getElementById('btn-prev').onclick = () => this.changeLevel(-1);
+        document.getElementById('btn-next').onclick = () => this.changeLevel(1);
+        document.getElementById('btn-start').onclick = () => this.startLevel();
+        document.getElementById('btn-resume').onclick = () => this.togglePause();
+        document.getElementById('btn-menu-pause').onclick = () => this.goMenu();
+        document.getElementById('btn-menu-win').onclick = () => this.goMenu();
+        document.getElementById('btn-next-level').onclick = () => {
+            this.currentLevelIdx = (this.currentLevelIdx + 1) % LEVEL_DATABASE.length;
+            this.startLevel();
+        };
     }
 
     resize() {
-        this.bgCanvas.width = this.mainCanvas.width = this.fxCanvas.width = window.innerWidth;
-        this.bgCanvas.height = this.mainCanvas.height = this.fxCanvas.height = window.innerHeight;
-        this.floorY = window.innerHeight - CONFIG.WORLD.FLOOR_OFFSET;
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
     }
 
-    setUIState(stateId) {
-        document.querySelectorAll('.menu-overlay').forEach(el => el.classList.remove('active'));
-        if (stateId) {
-            const el = document.getElementById(stateId);
-            if(el) el.classList.add('active');
-        }
-        
-        const hud = document.getElementById('hud');
-        if (this.state === 'PLAYING') {
-            hud.classList.add('active');
-        } else {
-            hud.classList.remove('active');
-        }
+    setScreen(screenObj) {
+        Object.values(this.ui).forEach(el => {
+            if(el.classList && el.classList.contains('screen')) el.classList.remove('active');
+        });
+        if(screenObj) screenObj.classList.add('active');
     }
 
-    startLevel(levelIndex) {
-        this.currentLevel = levelIndex;
-        this.floorY = this.levelManager.loadLevel(levelIndex);
-        
-        this.player.reset(0, window.innerHeight / 2);
-        this.cameraX = this.player.pos.x - CONFIG.WORLD.CAMERA_OFFSET_X;
+    changeLevel(dir) {
+        this.currentLevelIdx += dir;
+        if(this.currentLevelIdx < 0) this.currentLevelIdx = LEVEL_DATABASE.length - 1;
+        if(this.currentLevelIdx >= LEVEL_DATABASE.length) this.currentLevelIdx = 0;
+        this.updateMenuUI();
+    }
+
+    updateMenuUI() {
+        let d = LEVEL_DATABASE[this.currentLevelIdx];
+        this.ui.lvlName.innerText = d.name;
+        this.ui.lvlDiff.innerText = `${d.difficulty} ${this.currentLevelIdx + 1}`;
+        this.ui.menu.style.background = `radial-gradient(circle, ${d.bgColor} 0%, #000 100%)`;
+    }
+
+    goMenu() {
+        this.state = 'MENU';
+        this.setScreen(this.ui.menu);
+        this.updateMenuUI();
+    }
+
+    startLevel() {
+        this.attempts = 1;
+        this.resetRun();
+    }
+
+    resetRun() {
+        this.world.load(this.currentLevelIdx);
+        this.player.reset(this.world.groundY - 100);
+        this.camX = this.player.x - CFG.WORLD.CAMERA_OFFSET_X;
         this.particles.clear();
-        
         this.state = 'PLAYING';
-        this.setUIState(null);
+        this.setScreen(this.ui.hud);
         
-        document.getElementById('hud-attempts').innerText = `ATTEMPT ${this.attempts}`;
-        document.getElementById('hud-percent').innerText = `0%`;
-        document.getElementById('hud-bar').style.width = `0%`;
+        // Re-trigger animation
+        this.ui.attempt.innerText = `ATTEMPT ${this.attempts}`;
+        this.ui.attempt.style.animation = 'none';
+        void this.ui.attempt.offsetWidth; // trigger reflow
+        this.ui.attempt.style.animation = 'fadeOut 3s forwards';
     }
 
-    handleInputDown(e) {
-        if (e.type !== 'mousedown' || e.button === 0) {
-            if (this.state === 'PLAYING') {
-                this.player.isHolding = true;
+    setupInputs() {
+        const handleDown = (e) => {
+            if(e.target.tagName === 'BUTTON') return; // Prevent double trigger
+            if(this.state === 'PLAYING') {
+                this.player.thrusting = true;
+            } else if (this.state === 'DEAD') {
+                this.attempts++;
+                this.resetRun();
             }
-        }
+        };
+        const handleUp = () => { this.player.thrusting = false; };
+
+        window.addEventListener('mousedown', handleDown);
+        window.addEventListener('touchstart', (e) => {
+            if(e.target.tagName !== 'BUTTON') e.preventDefault();
+            handleDown(e);
+        }, {passive: false});
+        window.addEventListener('mouseup', handleUp);
+        window.addEventListener('touchend', handleUp);
+
+        window.addEventListener('keydown', (e) => {
+            if(e.code === 'Space' || e.code === 'ArrowUp') handleDown(e);
+            if(e.code === 'Escape' && this.state === 'PLAYING') this.togglePause();
+        });
+        window.addEventListener('keyup', (e) => {
+            if(e.code === 'Space' || e.code === 'ArrowUp') handleUp();
+        });
     }
 
-    handleInputUp(e) {
-        if (this.state === 'PLAYING') {
-            this.player.isHolding = false;
+    togglePause() {
+        if(this.state === 'PLAYING') {
+            this.state = 'PAUSED';
+            this.setScreen(this.ui.pause);
+        } else if (this.state === 'PAUSED') {
+            this.state = 'PLAYING';
+            this.setScreen(this.ui.hud);
         }
     }
 
     die() {
         this.state = 'DEAD';
-        this.player.isDead = true;
-        this.attempts++;
+        this.player.dead = true;
+        this.setScreen(this.ui.death);
         
-        // Death Explosion Particles
-        this.particles.emitBurst(this.player.pos.x, this.player.pos.y, 50, {
-            speedMin: 100, speedMax: 800,
-            life: 1.5, size: 15,
-            color: CONFIG.VISUALS.COLORS.SHIP_MAIN,
-            type: 0
-        });
-        this.particles.emitBurst(this.player.pos.x, this.player.pos.y, 30, {
-            speedMin: 50, speedMax: 500,
-            life: 1.0, size: 8,
-            color: '#ffffff',
-            type: 2
-        });
-
-        setTimeout(() => this.setUIState('menu-death'), 800);
+        // GD Explosion
+        this.particles.burst(this.player.x, this.player.y, 80, 1000, 1.5, 20, CFG.COLORS.PLAYER_MAIN);
+        this.particles.burst(this.player.x, this.player.y, 80, 800, 1.2, 15, CFG.COLORS.PLAYER_SEC);
+        this.particles.burst(this.player.x, this.player.y, 50, 400, 1.0, 10, '#ffffff');
     }
 
     win() {
         this.state = 'WON';
-        this.player.hasWon = true;
-        
-        // Victory Particles
-        this.particles.emitBurst(this.player.pos.x, this.player.pos.y, 100, {
-            speedMin: 200, speedMax: 1000,
-            life: 2.0, size: 20,
-            color: '#00ff88',
-            type: 1
-        });
-
-        setTimeout(() => this.setUIState('menu-win'), 1000);
+        this.player.won = true;
+        this.ui.winStats.innerHTML = `ATTEMPTS: ${this.attempts}<br>DISTANCE: ${Math.floor(this.player.distance)}`;
+        this.setScreen(this.ui.win);
     }
 
     checkCollisions() {
-        const playerBox = this.player.getHitbox();
+        let pBox = this.player.getHitbox();
+        for (let e of this.world.entities) {
+            // Broadphase
+            if (e.x > this.camX + window.innerWidth || e.x + e.size < this.camX) continue;
 
-        for (let obs of this.levelManager.obstacles) {
-            // Broadphase / Culling
-            if (obs.pos.x > this.cameraX + window.innerWidth || obs.pos.x + obs.size < this.cameraX) {
-                continue;
-            }
-
-            if (playerBox.intersects(obs.aabb)) {
-                if (obs.type === 9) {
+            if (pBox.intersects(e.aabb)) {
+                if (e.type === 'E') {
                     this.win();
                     return;
                 } else {
@@ -1381,96 +1105,75 @@ class GameEngine {
 
     update(dt) {
         if (this.state === 'PLAYING') {
-            this.player.update(dt, this.floorY);
-            
-            // Engine thrust particles
-            if (this.player.isHolding) {
-                const nozzleX = this.player.pos.x - this.player.width/2 - 5;
-                const nozzleY = this.player.pos.y;
-                // Calculate position behind the rotated ship
-                const cosR = Math.cos(this.player.rotation);
-                const sinR = Math.sin(this.player.rotation);
-                const offsetX = -this.player.width/2 * cosR;
-                const offsetY = -this.player.width/2 * sinR;
+            this.player.update(dt, this.world.groundY);
+            this.camX = this.player.x - CFG.WORLD.CAMERA_OFFSET_X;
 
-                this.particles.emit(this.player.pos.x + offsetX, this.player.pos.y + offsetY, {
-                    vx: -CONFIG.PHYSICS.SCROLL_SPEED_X * 0.8 + (Math.random() - 0.5) * 100,
-                    vy: this.player.vel.y * 0.2 + (Math.random() - 0.5) * 100,
-                    life: 0.4,
-                    size: 12,
-                    color: (Math.random() > 0.5) ? '#00e5ff' : '#ffffff',
-                    type: 2
-                });
+            // Exhaust particles
+            if (this.player.thrusting) {
+                let nozzleX = this.player.x - this.player.w/2;
+                let nozzleY = this.player.y;
+                // Offset nozzle by rotation
+                let ox = Math.cos(this.player.rot) * (-this.player.w/2) - Math.sin(this.player.rot) * 0;
+                let oy = Math.sin(this.player.rot) * (-this.player.w/2) + Math.cos(this.player.rot) * 0;
+
+                this.particles.emit(
+                    this.player.x + ox - 5, this.player.y + oy,
+                    -CFG.PHYSICS.SCROLL_SPEED + (Math.random()-0.5)*100, 
+                    this.player.vy*0.2 + (Math.random()-0.5)*100,
+                    0.3, 15, (Math.random() > 0.5 ? CFG.COLORS.PLAYER_SEC : '#fff'), 0
+                );
             }
 
-            this.cameraX = this.player.pos.x - CONFIG.WORLD.CAMERA_OFFSET_X;
             this.checkCollisions();
-            
-            // Update UI Progress
-            const progress = Math.min(100, Math.max(0, (this.player.pos.x / this.levelManager.levelLength) * 100));
-            document.getElementById('hud-percent').innerText = `${Math.floor(progress)}%`;
-            document.getElementById('hud-bar').style.width = `${progress}%`;
+
+            // UI Update
+            let pct = Math.floor(Math.min(100, Math.max(0, (this.player.x / this.world.levelLength) * 100)));
+            this.ui.bar.style.width = `${pct}%`;
+            this.ui.pct.innerText = `${pct}%`;
 
         } else if (this.state === 'WON') {
-            // Keep flying forward smoothly
-            this.player.vel.y *= 0.95; // dampen vertical movement
-            this.player.pos.x += this.player.vel.x * dt;
-            this.player.pos.y += this.player.vel.y * dt;
-            this.player.rotation *= 0.95;
-            this.cameraX = this.player.pos.x - CONFIG.WORLD.CAMERA_OFFSET_X;
+            this.player.x += CFG.PHYSICS.SCROLL_SPEED * dt;
+            this.camX = this.player.x - CFG.WORLD.CAMERA_OFFSET_X;
         }
 
-        this.bgManager.update(dt);
-        this.particles.update(dt);
+        if (this.state !== 'PAUSED') {
+            this.particles.update(dt);
+        }
     }
 
     render() {
-        // Clear canvases
-        this.mainCtx.clearRect(0, 0, this.mainCanvas.width, this.mainCanvas.height);
-        this.fxCtx.clearRect(0, 0, this.fxCanvas.width, this.fxCanvas.height);
+        if(this.state === 'MENU') {
+            // Render menu background preview (auto scrolling)
+            this.camX += 200 * CFG.TIMESTEP;
+            if(this.world.entities.length === 0) this.world.load(this.currentLevelIdx);
+        }
 
-        // Background Layer (Opaque)
-        this.bgManager.draw(this.bgCtx, this.cameraX);
-
-        // Main Layer
-        this.levelManager.draw(this.mainCtx, this.cameraX);
-        this.player.draw(this.mainCtx, this.cameraX);
-
-        // FX Layer (Particles with additive blending)
-        this.particles.draw(this.fxCtx, this.cameraX);
+        this.world.drawBackground(this.ctx, this.camX);
+        if (this.state === 'PLAYING' || this.state === 'WON' || this.state === 'PAUSED' || this.state === 'DEAD') {
+            this.particles.draw(this.ctx, this.camX);
+            this.player.draw(this.ctx, this.camX);
+        }
     }
 
     loop(timestamp) {
-        let frameTime = (timestamp - this.lastTime) / 1000;
+        let dt = (timestamp - this.lastTime) / 1000;
         this.lastTime = timestamp;
-
-        if (frameTime > CONFIG.MAX_FRAME_TIME) {
-            frameTime = CONFIG.MAX_FRAME_TIME;
+        
+        // Prevent death spiral on tab change
+        if (dt > 0.25) dt = 0.25;
+        
+        this.accumulator += dt;
+        while (this.accumulator >= CFG.TIMESTEP) {
+            this.update(CFG.TIMESTEP);
+            this.accumulator -= CFG.TIMESTEP;
         }
-
-        this.accumulator += frameTime;
-
-        // Fixed timestep for physics stability
-        while (this.accumulator >= CONFIG.TIME_STEP) {
-            this.update(CONFIG.TIME_STEP);
-            this.accumulator -= CONFIG.TIME_STEP;
-        }
-
-        // Interpolation for rendering could go here, but for now direct render
+        
         this.render();
-
-        requestAnimationFrame(this.loop);
+        requestAnimationFrame((t) => this.loop(t));
     }
 }
 
-// =========================================================================================
-// APPLICATION BOOTSTRAP
-// =========================================================================================
-
-window.addEventListener('load', () => {
-    const game = new GameEngine();
-});
-
+window.onload = () => new Engine();
 </script>
 </body>
 </html>
